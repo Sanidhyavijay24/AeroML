@@ -1,6 +1,5 @@
 # Datasets and Caches
 AeroML_Data/
-Data_Cache/
 
 # Environments
 .env
