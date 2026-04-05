@@ -20,76 +20,112 @@ st.set_page_config(
 # ---- THEME & STYLING ----
 st.markdown("""
 <style>
-    /* Dark Theme Optimization */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+    /* Dark Theme Optimization + Dribbble Cyber/Pro Aesthetics */
     .stApp {
-        background-color: #0E1117;
+        background-color: #050505;
         color: #FAFAFA;
+        font-family: 'Inter', sans-serif;
     }
     
+    h1, h2, h3, h4, h5, h6, p, span, div {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Metric Cards */
     .metric-card {
-        background: rgba(30, 30, 40, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 20px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        background: #111111;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
         text-align: center;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        overflow: hidden;
     }
     
+    /* Subtle volt green border glow on hover */
     .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+        transform: translateY(-4px);
+        border: 1px solid rgba(209, 255, 0, 0.3);
+        box-shadow: 0 12px 40px rgba(209, 255, 0, 0.12);
     }
     
     .metric-title {
-        font-size: 0.9rem;
-        color: #9BA1A6;
+        font-size: 0.85rem;
+        color: #888888;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
+        letter-spacing: 1.5px;
+        margin-bottom: 12px;
+        font-weight: 600;
     }
     
     .metric-value {
-        font-size: 2.2rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2.5rem;
         font-weight: 700;
-        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #D1FF00;
+        text-shadow: 0 0 20px rgba(209, 255, 0, 0.3);
     }
     
     .metric-value-warn {
-        font-size: 2.2rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2.5rem;
         font-weight: 700;
-        background: linear-gradient(90deg, #fceABB 0%, #f8b500 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #FF3B30;
+        text-shadow: 0 0 20px rgba(255, 59, 48, 0.3);
     }
     
     .metric-std {
+        font-family: 'JetBrains Mono', monospace;
         font-size: 0.85rem;
         color: #6C757D;
-        margin-top: 5px;
+        margin-top: 8px;
     }
     
+    /* Streamlit Tabs Glassmorphism overrides */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 20px;
+        gap: 16px;
+        background: rgba(20, 20, 20, 0.5);
+        padding: 8px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
     
     .stTabs [data-baseweb="tab"] {
-        height: 50px;
+        height: 45px;
         white-space: pre-wrap;
         background-color: transparent;
-        border-radius: 4px 4px 0px 0px;
-        gap: 1px;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        color: #9BA1A6;
+        border-radius: 8px;
+        padding: 0 20px;
+        color: #777777;
+        font-weight: 600;
     }
     
     .stTabs [aria-selected="true"] {
-        color: #FAFAFA !important;
-        border-bottom: 3px solid #00f2fe !important;
+        background-color: #222222 !important;
+        color: #D1FF00 !important;
+        border-bottom: none !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    /* Primary Button Styling overrides */
+    .stButton > button {
+        background-color: rgba(209, 255, 0, 0.1);
+        color: #D1FF00;
+        font-weight: 800;
+        border-radius: 12px;
+        border: 1px solid rgba(209, 255, 0, 0.5);
+        transition: all 0.2s;
+    }
+    
+    .stButton > button:hover {
+        background-color: #D1FF00;
+        color: #050505;
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(209, 255, 0, 0.3);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -103,27 +139,66 @@ def load_forward_predictor():
 def load_reverse_designer():
     return ReverseV3Designer()
 
+def load_precomputed_results():
+    summary_path = Path("Reverse_outputs/reverse_refinement_summary.json")
+    csv_path = Path("Reverse_outputs/reverse_refinement_candidate_1.csv")
+    if not summary_path.exists() or not csv_path.exists():
+        return None, None, None
+        
+    import json
+    with open(summary_path, 'r') as f:
+        summary = json.load(f)
+        
+    top = summary["candidates"][0]
+    df = pd.read_csv(csv_path)
+    
+    bc = {
+        "label": top["label"] + " (Pre-computed Kaggle)",
+        "LDMax_pred": top["LDMax_pred"],
+        "ClMax_pred": top["ClMax_pred"],
+        "CdMin_pred": top["CdMin_pred"],
+        "LDMax_std": top["LDMax_std"],
+        "ClMax_std": top["ClMax_std"],
+        "CdMin_std": top["CdMin_std"],
+        "CdMin_rel_std": top["CdMin_rel_std"],
+        "passes_uncertainty": top["passes_uncertainty"],
+        "geometry": {
+            "x": df["x"].values,
+            "y_upper": df["y_upper"].values,
+            "y_lower": df["y_lower"].values,
+            "thickness": df["thickness"].values,
+            "camber": df["camber"].values,
+        },
+        "is_precomputed": True
+    }
+    
+    target = summary.get("target", {"LDMax": 180.0, "ClMax": 1.85, "CdMin": 0.02})
+    flow = summary.get("flow", {"Re": 2000000.0, "Mach": 0.1})
+    
+    return bc, target, flow
+
 
 def plot_geometry(x, y_upper, y_lower, title="Airfoil Geometry"):
     fig, ax = plt.subplots(figsize=(10, 3), dpi=150)
-    fig.patch.set_facecolor('#0E1117')
-    ax.set_facecolor('#0E1117')
+    fig.patch.set_facecolor('#050505')
+    ax.set_facecolor('#050505')
     
-    ax.plot(x, y_upper, label='Upper Surface', color='#4facfe', linewidth=2)
-    ax.plot(x, y_lower, label='Lower Surface', color='#00f2fe', linewidth=2)
-    ax.plot(x, 0.5 * (y_upper + y_lower), '--', color='#6e757c', label='Camber Line', linewidth=1)
+    # Glowing neon lines
+    ax.plot(x, y_upper, label='Upper Surface', color='#D1FF00', linewidth=2.5, alpha=0.9)
+    ax.plot(x, y_lower, label='Lower Surface', color='#00F0FF', linewidth=2.5, alpha=0.8)
+    ax.plot(x, 0.5 * (y_upper + y_lower), '--', color='#444444', label='Camber Line', linewidth=1)
     
     ax.set_aspect('equal')
-    ax.grid(True, linestyle=':', alpha=0.2, color='white')
-    ax.set_xlabel('x/c', color='white', fontsize=9)
-    ax.set_ylabel('y/c', color='white', fontsize=9)
-    ax.tick_params(colors='white', labelsize=8)
+    ax.grid(True, linestyle='solid', alpha=0.08, color='#FFFFFF')
+    ax.set_xlabel('x/c', color='#888888', fontsize=9, family='monospace')
+    ax.set_ylabel('y/c', color='#888888', fontsize=9, family='monospace')
+    ax.tick_params(colors='#666666', labelsize=8)
     
     # Hide spines
     for spine in ax.spines.values():
-        spine.set_color('#333333')
+        spine.set_color('#111111')
         
-    ax.set_title(title, color='white', fontsize=12, pad=15)
+    ax.set_title(title, color='#FAFAFA', fontsize=12, pad=15, weight='bold')
     fig.tight_layout()
     return fig
 
@@ -166,6 +241,15 @@ def main():
         try:
             forward_predictor = load_forward_predictor()
             reverse_designer = load_reverse_designer()
+            
+            # Load precomputed Kaggle outputs
+            if 'best_candidate' not in st.session_state:
+                bc, targ, fl = load_precomputed_results()
+                if bc is not None:
+                    st.session_state['best_candidate'] = bc
+                    st.session_state['target'] = targ
+                    st.session_state['flow'] = fl
+                    
         except Exception as e:
             st.error(f"Failed to load models: {str(e)}\nPlease check if artifacts are present in the search roots.")
             return
@@ -258,13 +342,16 @@ def main():
         
         with rcol1:
             st.subheader("Aerodynamic Targets")
-            target_ld = st.number_input("Target LDMax", min_value=1.0, max_value=300.0, value=150.0)
-            target_cl = st.number_input("Target ClMax", min_value=0.1, max_value=3.0, value=1.5)
-            target_cd = st.number_input("Target CdMin", min_value=0.001, max_value=0.1, value=0.015, format="%.4f")
+            init_target = st.session_state.get('target', {"LDMax": 150.0, "ClMax": 1.5, "CdMin": 0.015})
+            init_flow = st.session_state.get('flow', {"Re": 1e6, "Mach": 0.1})
+            
+            target_ld = st.number_input("Target LDMax", min_value=1.0, max_value=300.0, value=float(init_target["LDMax"]))
+            target_cl = st.number_input("Target ClMax", min_value=0.1, max_value=3.0, value=float(init_target["ClMax"]))
+            target_cd = st.number_input("Target CdMin", min_value=0.001, max_value=0.1, value=float(init_target["CdMin"]), format="%.4f")
             
             st.subheader("Operating Conditions")
-            r_re = st.number_input("Design Re", min_value=1e4, max_value=2e7, value=1e6, format="%e")
-            r_mach = st.number_input("Design Mach", min_value=0.0, max_value=0.8, value=0.1, step=0.01)
+            r_re = st.number_input("Design Re", min_value=1e4, max_value=2e7, value=float(init_flow["Re"]), format="%e")
+            r_mach = st.number_input("Design Mach", min_value=0.0, max_value=0.8, value=float(init_flow["Mach"]), step=0.01)
             
             st.subheader("Search Mode")
             mode = st.selectbox("Search Mode", ["Fast Demo", "Balanced", "High Quality"], index=1, 
@@ -321,22 +408,25 @@ def main():
                 
                 # Download
                 csv_data = dat_to_csv_download(geom["x"], geom["y_upper"], geom["y_lower"])
-                st.download_button("Download Candidate .dat file", data=csv_data, file_name=f"candidate_{bc['label']}.dat", mime='text/plain')
+                st.download_button("Download Candidate .dat file", data=csv_data, file_name=f"candidate_{bc.get('label', 'custom')}.dat", mime='text/plain')
                 
                 # Refinement option
-                st.divider()
-                st.write("### Local Refinement")
-                st.write("Optimize the current top candidate further using local gradient search. This takes longer but yields better target matching.")
-                
-                refine_btn = st.button("Refine Top Candidate", use_container_width=True)
-                if refine_btn:
-                    with st.spinner("Refining..."):
-                        targ = st.session_state['target']
-                        fl = st.session_state['flow']
-                        ref_res = reverse_designer.refine_candidate(bc, targ, fl)
-                        best_ref = ref_res[0]
-                        st.session_state['best_candidate'] = best_ref
-                        st.rerun()
+                if not bc.get("is_precomputed", False):
+                    st.divider()
+                    st.write("### Local Refinement")
+                    st.write("Optimize the current top candidate further using local gradient search. This takes longer but yields better target matching.")
+                    
+                    refine_btn = st.button("Refine Top Candidate", use_container_width=True)
+                    if refine_btn:
+                        with st.spinner("Refining..."):
+                            targ = st.session_state['target']
+                            fl = st.session_state['flow']
+                            ref_res = reverse_designer.refine_candidate(bc, targ, fl)
+                            best_ref = ref_res[0]
+                            st.session_state['best_candidate'] = best_ref
+                            st.rerun()
+                else:
+                    st.info("💡 **Pre-computed Output Shown:** You are looking at a cached result to save time. Enter new targets and click 'Search' to run a fresh live design pipeline.")
 
 if __name__ == "__main__":
     main()
