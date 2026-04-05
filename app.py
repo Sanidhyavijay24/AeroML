@@ -22,11 +22,43 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
 
-    /* Dark Theme Optimization + Dribbble Cyber/Pro Aesthetics */
+    /* Dark Theme Optimization + Dynamic Cyber Aesthetics */
+    .stApp > header {
+        background-color: transparent !important;
+    }
+
     .stApp {
         background-color: #050505;
         color: #FAFAFA;
         font-family: 'Inter', sans-serif;
+        background-image: 
+            radial-gradient(circle at 15% 30%, rgba(209, 255, 0, 0.05), transparent 40%),
+            radial-gradient(circle at 85% 70%, rgba(0, 240, 255, 0.05), transparent 40%);
+        background-attachment: fixed;
+    }
+    
+    /* Dynamic moving mesh background */
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: -100px;
+        left: -100px;
+        width: calc(100vw + 200px);
+        height: calc(100vh + 200px);
+        background-image: 
+            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
+        z-index: -1;
+        pointer-events: none;
+        animation: subtlePan 30s linear infinite;
+        mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%);
+        -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%);
+    }
+
+    @keyframes subtlePan {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(40px, 40px); }
     }
     
     h1, h2, h3, h4, h5, h6, p, span, div {
@@ -35,22 +67,25 @@ st.markdown("""
     
     /* Metric Cards */
     .metric-card {
-        background: #111111;
+        background: linear-gradient(180deg, rgba(30, 30, 30, 0.6) 0%, #080808 100%);
         border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 24px;
+        border-top: 2px solid rgba(209, 255, 0, 0.5);
+        border-radius: 20px;
         padding: 32px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         text-align: center;
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         position: relative;
         overflow: hidden;
+        backdrop-filter: blur(12px);
     }
     
     /* Subtle volt green border glow on hover */
     .metric-card:hover {
-        transform: translateY(-4px);
-        border: 1px solid rgba(209, 255, 0, 0.3);
-        box-shadow: 0 12px 40px rgba(209, 255, 0, 0.12);
+        transform: translateY(-5px);
+        border: 1px solid rgba(209, 255, 0, 0.4);
+        border-top: 2px solid #D1FF00;
+        box-shadow: 0 15px 40px rgba(209, 255, 0, 0.15);
     }
     
     .metric-title {
@@ -113,19 +148,71 @@ st.markdown("""
     
     /* Primary Button Styling overrides */
     .stButton > button {
-        background-color: rgba(209, 255, 0, 0.1);
+        background: linear-gradient(90deg, rgba(209, 255, 0, 0.1) 0%, rgba(209, 255, 0, 0.05) 100%);
         color: #D1FF00;
         font-weight: 800;
         border-radius: 12px;
         border: 1px solid rgba(209, 255, 0, 0.5);
-        transition: all 0.2s;
+        transition: all 0.3s ease;
     }
     
     .stButton > button:hover {
-        background-color: #D1FF00;
+        background: #D1FF00;
         color: #050505;
         transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(209, 255, 0, 0.3);
+        box-shadow: 0 0 20px rgba(209, 255, 0, 0.4);
+        border: 1px solid #D1FF00;
+    }
+    
+    /* Streamlit Input Styling (Number Inputs, Selectboxes) */
+    .stNumberInput input, .stTextInput input, .stSelectbox div[data-baseweb="select"] {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #FAFAFA !important;
+        border-radius: 10px !important;
+        transition: all 0.3s ease;
+    }
+    
+    .stNumberInput input:focus, .stTextInput input:focus, .stSelectbox div[data-baseweb="select"]:focus-within {
+        border-color: #00F0FF !important;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
+        background-color: rgba(0, 240, 255, 0.05) !important;
+    }
+    
+    /* File Uploader Stylings */
+    [data-testid="stFileUploadDropzone"] {
+        background-color: rgba(255, 255, 255, 0.02) !important;
+        border: 2px dashed rgba(255, 255, 255, 0.15) !important;
+        border-radius: 16px !important;
+        transition: all 0.3s ease;
+    }
+    
+    [data-testid="stFileUploadDropzone"]:hover {
+        border-color: #00F0FF !important;
+        background-color: rgba(0, 240, 255, 0.03) !important;
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+    }
+    
+    /* Info Alerts styled as Glassmorphic components */
+    .stAlert {
+        background: rgba(0, 240, 255, 0.05) !important;
+        border: 1px solid rgba(0, 240, 255, 0.3) !important;
+        color: #E0FFFF !important;
+        border-radius: 12px !important;
+        backdrop-filter: blur(10px);
+    }
+    
+    .stAlert p {
+        color: #E0FFFF !important;
+    }
+    
+    /* Gradient Text for Title */
+    .title-glow {
+        background: linear-gradient(90deg, #D1FF00, #00F0FF);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        letter-spacing: -0.5px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -234,8 +321,8 @@ def render_metric(title, value, uncertainty, rel_uncertainty=None, is_warn=False
 
 
 def main():
-    st.title("AeroML Dashboard ✈️")
-    st.markdown("<p style='color: #9BA1A6;'>Physics-Informed Deep Learning for Airfoil Analysis & Design</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='padding-bottom: 0;'><span class='title-glow'>AeroML Dashboard</span> ✈️</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #9BA1A6; margin-top: -10px; margin-bottom: 30px;'>Physics-Informed Deep Learning for Airfoil Analysis & Design</p>", unsafe_allow_html=True)
     
     with st.spinner("Loading AI Models..."):
         try:
