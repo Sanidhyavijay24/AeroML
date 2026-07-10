@@ -26,11 +26,11 @@ AeroML/
 ├── scripts/
 │   ├── train_forward.py     # Command Line Interface to train/fine-tune the forward ensemble
 │   └── run_reverse.py       # Command Line Interface to run one-off reverse design searches
-├── test_drift.py            # Local forward prediction validation test script
+├── tests/
+│   ├── test_data/           # Baseline validation airfoil coordinates (.dat format)
+│   └── test_forward_drift.py # Validation test script to verify predictions and check for drift
 ├── Data_Cache/              # Preprocessed dataset + train/val/test split manifest
 ├── Forward_outputs/         # Trained ensemble models + metrics
-├── Reverse_outputs/         # Saved reverse-search results from past runs
-└── Reference_Notebooks/     # Historical experimentation notebooks (kept for exploration history)
 ```
 
 ## Data Flow

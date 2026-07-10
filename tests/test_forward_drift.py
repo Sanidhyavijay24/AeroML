@@ -1,14 +1,22 @@
+# -*- coding: utf-8 -*-
+"""
+@file test_forward_drift.py
+@description Validation test script to verify forward predictions and detect drift
+@module tests
+"""
+
 import sys
 from pathlib import Path
 
-# Bootstrap local src package imports
-sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+# Bootstrap local src package imports (two levels up from tests/)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import numpy as np
 import pandas as pd
 from aeroml.forward import ForwardV3Predictor
 import aeroml.data as common_data
 import aeroml.features as common_features
+
 
 def run_test():
     print("Loading predictor...")
@@ -26,6 +34,9 @@ def run_test():
         {"name": "sg6041", "Re": 2e6, "Mach": 0.10, "exp_ld": 106.67, "exp_cl": 1.6226, "exp_cd": 0.10757},
         {"name": "clarkyh", "Re": 4e6, "Mach": 0.10, "exp_ld": 117.73, "exp_cl": 1.6671, "exp_cd": 0.10019},
     ]
+    
+    # Path to test data directory relative to this script
+    test_data_dir = Path(__file__).resolve().parent / "test_data"
     
     for case in cases:
         print(f"\n--- Testing base case: {case['name']} Re={case['Re']} Mach={case['Mach']} ---")
@@ -60,9 +71,7 @@ def run_test():
         print(f"Direct from Dataset Features -> LDMax={p_c['LDMax']:.4f}, ClMax={p_c['ClMax']:.4f}, CdMin={p_c['CdMin']:.4f}")
         
         # 3. Simulate getting it from dat file
-        # We need the dat file path
-        # Try to find dat file in Data folder
-        dat_path = common_data.DATA_DIR / f"{case['name']}.dat"
+        dat_path = test_data_dir / f"{case['name']}.dat"
         if dat_path.exists():
             geom = common_features.geometry_representation(dat_path)
             prof_dat = geom["profile"]
@@ -78,6 +87,7 @@ def run_test():
             print(f"From raw .dat processing   -> LDMax={p_d['LDMax']:.4f}, ClMax={p_d['ClMax']:.4f}, CdMin={p_d['CdMin']:.4f}")
         else:
             print(f"Dat file not found: {dat_path}")
+
 
 if __name__ == '__main__':
     run_test()

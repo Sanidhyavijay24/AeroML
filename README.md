@@ -70,10 +70,9 @@ python scripts/run_reverse.py --ldmax 120 --clmax 1.4 --cdmin 0.008 --re 3000000
 ```
 src/aeroml/                     Core package containing modules for data processing, features, models, training, evaluation, and runtime prediction
 scripts/                        CLI scripts for retraining and running one-off reverse searches
-Reference_Notebooks/            Historical experimentation history (v1 -> v3 forward, reverse search notebooks), kept for reference but no longer required to run or retrain
+tests/                          Drift validation tests and local test airfoil dataset
 Data_Cache/                     Preprocessed dataset + train/val/test split manifest
 Forward_outputs/                Trained ensemble models + metrics
-Reverse_outputs/                Saved reverse-search results from past runs
 context.md                      My running notes on architecture decisions
 ```
 
