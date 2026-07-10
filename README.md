@@ -11,7 +11,7 @@ I built this after getting curious about whether a surrogate model could replace
 - `ClMax` — max lift coefficient
 - `CdMin` — min drag coefficient
 
-**Reverse design** — give it target values for those same three, plus your flow conditions, and it searches a compressed geometry space to propose airfoil shapes that should hit those targets. This isn't a generative model — it's an optimizer (multi-restart L-BFGS-B) working over a PCA-compressed latent representation of airfoil geometry, using the forward model as the thing it's optimizing against. It also reports how much its own ensemble disagrees on each candidate, so you're not just getting a shape back with no sense of how confident the system actually is in it.
+**Reverse design** — give it target values for those same three, plus your flow conditions, and it searches a compressed geometry space to propose airfoil shapes that should hit those targets. This isn't a generative model — it's a custom optimizer working over a PCA-compressed latent representation of airfoil geometry, using the forward model as the thing it's optimizing against. All restarts run as one batched, gradient-based search (finite-difference gradients + Adam, computed directly against the forward ensemble) instead of looping single-sample evaluations one at a time — the difference in practice is the reverse search finishing in seconds instead of tens of minutes. It also reports how much its own ensemble disagrees on each candidate, so you're not just getting a shape back with no sense of how confident the system actually is in it.
 
 Both capabilities are exposed via programmatic APIs and CLI scripts so you can train and design airfoils directly from the command line.
 
@@ -80,7 +80,7 @@ The `Data_Cache` folder ships with the repo on purpose — it means you can clon
 
 ## Tech stack
 
-TensorFlow/Keras for the forward ensemble, scikit-learn for PCA and scaling, and SciPy for the reverse optimizer.
+TensorFlow/Keras for the forward ensemble, scikit-learn for PCA and scaling, and a custom batched Adam optimizer (built directly on TensorFlow) for the reverse search.
 
 ## Where this is headed
 
