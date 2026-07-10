@@ -8,7 +8,6 @@ AeroML is an advanced airfoil design system that integrates two primary physics-
 ## Tech Stack
 - Python Environment: **Python 3.10** managed via Conda (environment: `aeroml`).
 - Machine Learning: **TensorFlow 2.21.0**, **scikit-learn 1.7.2**, **SciPy 1.15.3**.
-- Web Dashboard: **Streamlit 1.59.1**.
 - Utilities: **NumPy 2.2.6**, **Pandas 2.3.3**, **Matplotlib 3.10.9**, **tqdm 4.68.4**.
 
 ## Architecture & Folder Structure
@@ -27,7 +26,6 @@ AeroML/
 ├── scripts/
 │   ├── train_forward.py     # Command Line Interface to train/fine-tune the forward ensemble
 │   └── run_reverse.py       # Command Line Interface to run one-off reverse design searches
-├── app.py                   # Streamlit dashboard entrypoint (updated to import from src)
 ├── test_drift.py            # Local forward prediction validation test script
 ├── Data_Cache/              # Preprocessed dataset + train/val/test split manifest
 ├── Forward_outputs/         # Trained ensemble models + metrics

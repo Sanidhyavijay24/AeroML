@@ -13,7 +13,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "streamlit==1.59.1",
     "numpy==2.2.6",
     "pandas==2.3.3",
     "matplotlib==3.10.9",

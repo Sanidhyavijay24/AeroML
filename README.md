@@ -13,7 +13,7 @@ I built this after getting curious about whether a surrogate model could replace
 
 **Reverse design** — give it target values for those same three, plus your flow conditions, and it searches a compressed geometry space to propose airfoil shapes that should hit those targets. This isn't a generative model — it's an optimizer (multi-restart L-BFGS-B) working over a PCA-compressed latent representation of airfoil geometry, using the forward model as the thing it's optimizing against. It also reports how much its own ensemble disagrees on each candidate, so you're not just getting a shape back with no sense of how confident the system actually is in it.
 
-Both are wrapped in a Streamlit dashboard so you can actually play with it instead of digging through notebooks.
+Both capabilities are exposed via programmatic APIs and CLI scripts so you can train and design airfoils directly from the command line.
 
 ## The data
 
@@ -33,7 +33,7 @@ The forward model is an ensemble of 3 seeds, and on held-out test data it lands 
 
 `CdMin` is the harder target of the three — drag is just noisier and more sensitive to fine geometry detail than lift — and it's the one I'm still actively improving.
 
-## Running it locally
+## Setup and Installation
 
 I'd recommend a dedicated conda environment so the TF/sklearn versions don't fight with anything else on your machine:
 
@@ -42,15 +42,12 @@ conda create --name aeroml python=3.10 -y
 conda activate aeroml
 ```
 
-Then install dependencies and launch:
+Then install dependencies:
 
 ```bash
 cd AeroML
 pip install -r requirements.txt
-streamlit run app.py
 ```
-
-It should open at `http://localhost:8501`. First launch will take a few seconds while it loads the cached dataset and model artifacts.
 
 ## Training and Reproduction
 
@@ -62,7 +59,7 @@ python scripts/train_forward.py --seeds 42,52,62 --variant cd_loss_only --epochs
 
 This script reproduces the exact ensemble training pipeline (data prep, scaling, training all ensemble seeds, computing metrics, and writing artifacts) and saves them to `Forward_outputs/`.
 
-You can also run one-off reverse design searches directly from the CLI without opening Streamlit:
+You can also run one-off reverse design searches directly from the CLI:
 
 ```bash
 python scripts/run_reverse.py --ldmax 120 --clmax 1.4 --cdmin 0.008 --re 3000000 --mach 0.15
@@ -71,7 +68,6 @@ python scripts/run_reverse.py --ldmax 120 --clmax 1.4 --cdmin 0.008 --re 3000000
 ## Project layout
 
 ```
-app.py                          Streamlit dashboard entrypoint — forward + reverse UI
 src/aeroml/                     Core package containing modules for data processing, features, models, training, evaluation, and runtime prediction
 scripts/                        CLI scripts for retraining and running one-off reverse searches
 Reference_Notebooks/            Historical experimentation history (v1 -> v3 forward, reverse search notebooks), kept for reference but no longer required to run or retrain
@@ -81,11 +77,11 @@ Reverse_outputs/                Saved reverse-search results from past runs
 context.md                      My running notes on architecture decisions
 ```
 
-The `Data_Cache` folder ships with the repo on purpose — it means you can clone this and run the dashboard immediately without re-parsing 6,000+ raw `.dat` files first.
+The `Data_Cache` folder ships with the repo on purpose — it means you can clone this and run predictions or design searches immediately without re-parsing 6,000+ raw `.dat` files first.
 
 ## Tech stack
 
-TensorFlow/Keras for the forward ensemble, scikit-learn for PCA and scaling, SciPy for the reverse optimizer, Streamlit for the dashboard.
+TensorFlow/Keras for the forward ensemble, scikit-learn for PCA and scaling, and SciPy for the reverse optimizer.
 
 ## Where this is headed
 
