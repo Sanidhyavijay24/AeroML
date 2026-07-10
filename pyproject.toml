@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aeroml"
+version = "0.1.0"
+description = "AeroML: Physics-Informed Machine Learning for Airfoil Design"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "streamlit==1.59.1",
+    "numpy==2.2.6",
+    "pandas==2.3.3",
+    "matplotlib==3.10.9",
+    "scikit-learn==1.7.2",
+    "scipy==1.15.3",
+    "tensorflow==2.21.0",
+    "tqdm==4.68.4"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
