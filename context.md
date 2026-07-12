@@ -78,6 +78,13 @@ AeroML/
   - [x] Connect predictions and optimization to python process runner.
   - [x] Standardize colors (cotton, cherry-red, maroon, noir-black) across visualizer and graphing dashboard.
   - [x] Polish branding names, replace obsolete "Vortex" labels with mature technical branding, add GitHub codebase link, and remove live indicators.
+- [x] **Phase 5: Discrete Mach Navigation and API Extrapolation Warnings**
+  - [x] Establish single source of truth `KNOWN_MACH_VALUES` grid constant in `features.py`.
+  - [x] Add `mach_extrapolation_distance` validation function to detect off-grid queries.
+  - [x] Integrate `mach_warning` telemetry payload within `api_bridge.py`.
+  - [x] Convert frontend sliders to 4-position discrete selectors snapping to valid training Mach values.
+  - [x] Render amber "OUTSIDE VALIDATED RANGE" status badges when predictions bypass client constraints.
+  - [x] Sync illustrative landing page visualizer metrics to valid grid values.
 
 ## Data Models
 - **Caching Dataset:** NPZ file (`aeroml_xfoil_n9_dataset.npz`) containing:

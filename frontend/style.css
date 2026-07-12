@@ -690,3 +690,17 @@ h1, h2, h3, h4 {
 .animate-fade-in {
   animation: fadeInUp 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+.warning-badge {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+  display: inline-block;
+  background-color: rgba(230, 81, 0, 0.15);
+  color: #E65100;
+  border: 1px solid rgba(230, 81, 0, 0.35);
+}
+

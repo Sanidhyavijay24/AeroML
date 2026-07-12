@@ -199,7 +199,7 @@ function updateSensors() {
       sensorElRe.innerText = (reBase + reDelta).toLocaleString();
     }
 
-    const machBase = 0.150;
+    const machBase = 0.250;
     const machDelta = (Math.random() - 0.5) * 0.002;
     if (sensorElMach) {
       sensorElMach.innerText = (machBase + machDelta).toFixed(4);

@@ -54,13 +54,22 @@ tabForward.addEventListener('click', () => switchMode('forward'));
 tabReverse.addEventListener('click', () => switchMode('reverse'));
 
 // Sliders and Readouts
+const KNOWN_MACH_VALUES = [0.0, 0.10, 0.25, 0.50];
+
+function getMachValueFromSlider(sliderId) {
+  const el = document.getElementById(sliderId);
+  if (!el) return 0.10;
+  const idx = parseInt(el.value);
+  return KNOWN_MACH_VALUES[idx] !== undefined ? KNOWN_MACH_VALUES[idx] : 0.10;
+}
+
 const sliders = [
-  { slider: 'machPredictSlider', readout: 'machPredictVal', format: (v) => parseFloat(v).toFixed(3) },
+  { slider: 'machPredictSlider', readout: 'machPredictVal', format: (v) => parseFloat(KNOWN_MACH_VALUES[parseInt(v)] !== undefined ? KNOWN_MACH_VALUES[parseInt(v)] : 0.10).toFixed(3) },
   { slider: 'rePredictSlider', readout: 'rePredictVal', format: (v) => parseFloat(v).toFixed(2) },
   { slider: 'targetLdSlider', readout: 'targetLdVal', format: (v) => parseInt(v) },
   { slider: 'targetClSlider', readout: 'targetClVal', format: (v) => parseFloat(v).toFixed(2) },
   { slider: 'targetCdSlider', readout: 'targetCdVal', format: (v) => parseFloat(v).toFixed(3) },
-  { slider: 'machOptimizeSlider', readout: 'machOptimizeVal', format: (v) => parseFloat(v).toFixed(3) },
+  { slider: 'machOptimizeSlider', readout: 'machOptimizeVal', format: (v) => parseFloat(KNOWN_MACH_VALUES[parseInt(v)] !== undefined ? KNOWN_MACH_VALUES[parseInt(v)] : 0.10).toFixed(3) },
   { slider: 'reOptimizeSlider', readout: 'reOptimizeVal', format: (v) => parseFloat(v).toFixed(2) }
 ];
 
@@ -482,7 +491,7 @@ btnRunPrediction.addEventListener('click', async () => {
   const formData = new FormData();
   formData.append('file', uploadedFile);
   formData.append('re', document.getElementById('rePredictSlider').value * 1e6);
-  formData.append('mach', document.getElementById('machPredictSlider').value);
+  formData.append('mach', getMachValueFromSlider('machPredictSlider'));
 
   try {
     const res = await fetch('/api/predict', {
@@ -500,6 +509,17 @@ btnRunPrediction.addEventListener('click', async () => {
 
     // Update readouts
     updateMetricReadouts(data.predictions, data.uncertainty, 'predict');
+
+    // Toggle extrapolation warning
+    const warnEl = document.getElementById('predictMachWarning');
+    if (warnEl) {
+      if (data.mach_warning && data.mach_warning.extrapolated) {
+        warnEl.style.display = 'inline-block';
+        logTerminal(`Warning: Prediction extrapolated outside validated Mach grid. Nearest known Mach: ${data.mach_warning.nearest_known_mach.toFixed(2)}`, 'warning');
+      } else {
+        warnEl.style.display = 'none';
+      }
+    }
 
     // Set active geometry
     activeGeometry = {
@@ -534,7 +554,7 @@ btnRunOptimization.addEventListener('click', async () => {
     clmax: parseFloat(document.getElementById('targetClSlider').value),
     cdmin: parseFloat(document.getElementById('targetCdSlider').value),
     re: parseFloat(document.getElementById('reOptimizeSlider').value) * 1e6,
-    mach: parseFloat(document.getElementById('machOptimizeSlider').value)
+    mach: getMachValueFromSlider('machOptimizeSlider')
   };
 
   try {
@@ -553,6 +573,17 @@ btnRunOptimization.addEventListener('click', async () => {
     activeCandidates = data.candidates;
 
     logTerminal(`Search completed. Found ${activeCandidates.length} convergent profiles.`, 'success');
+
+    // Toggle extrapolation warning
+    const warnEl = document.getElementById('optimizeMachWarning');
+    if (warnEl) {
+      if (data.mach_warning && data.mach_warning.extrapolated) {
+        warnEl.style.display = 'inline-block';
+        logTerminal(`Warning: Optimization requested outside validated Mach grid. Nearest known Mach: ${data.mach_warning.nearest_known_mach.toFixed(2)}`, 'warning');
+      } else {
+        warnEl.style.display = 'none';
+      }
+    }
 
     // Populate select candidates list
     candidateSelect.innerHTML = '';

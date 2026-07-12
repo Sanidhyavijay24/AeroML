@@ -219,9 +219,9 @@
           <div class="slider-group">
             <div class="slider-header">
               <span>Mach Number</span>
-              <span id="machPredictVal" class="readout-value">0.150</span>
+              <span id="machPredictVal" class="readout-value">0.100</span>
             </div>
-            <input type="range" id="machPredictSlider" class="cad-slider" min="0.0" max="0.5" step="0.01" value="0.15">
+            <input type="range" id="machPredictSlider" class="cad-slider" min="0" max="3" step="1" value="1" data-mach-values="0.0,0.10,0.25,0.50">
           </div>
 
           <div class="slider-group" style="margin-bottom: 1.5rem;">
@@ -266,9 +266,9 @@
           <div class="slider-group">
             <div class="slider-header">
               <span>Flow Mach (M)</span>
-              <span id="machOptimizeVal" class="readout-value">0.150</span>
+              <span id="machOptimizeVal" class="readout-value">0.100</span>
             </div>
-            <input type="range" id="machOptimizeSlider" class="cad-slider" min="0.0" max="0.5" step="0.01" value="0.15">
+            <input type="range" id="machOptimizeSlider" class="cad-slider" min="0" max="3" step="1" value="1" data-mach-values="0.0,0.10,0.25,0.50">
           </div>
 
           <div class="slider-group" style="margin-bottom: 1.5rem;">
@@ -311,7 +311,10 @@
         
         <!-- Forward Analysis Output Panel -->
         <div id="panelForwardOutputs" class="cad-panel" style="flex: none; height: auto;">
-          <h3 style="font-size: 1rem; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">SIMULATION READOUT</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <h3 style="font-size: 1rem; margin: 0;">SIMULATION READOUT</h3>
+            <span id="predictMachWarning" class="warning-badge" style="display: none; margin: 0;">OUTSIDE VALIDATED RANGE</span>
+          </div>
           <div id="predictionMetrics">
             <div class="metric-row">
               <div class="metric-header">
@@ -357,7 +360,10 @@
           </div>
 
           <div class="cad-panel">
-            <h3 style="font-size: 1rem; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">CANDIDATE READOUT</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+              <h3 style="font-size: 1rem; margin: 0;">CANDIDATE READOUT</h3>
+              <span id="optimizeMachWarning" class="warning-badge" style="display: none; margin: 0;">OUTSIDE VALIDATED RANGE</span>
+            </div>
             <div>
               <div class="metric-row">
                 <div class="metric-header">

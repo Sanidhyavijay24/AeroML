@@ -178,3 +178,20 @@ def decode_predictions(pred_scaled, ld_scaler, cl_scaler, cd_scaler):
     cd_log = cd_scaler.inverse_transform(pred_scaled["cdmin_log"]).ravel()
     cd_pred = np.exp(cd_log)
     return np.column_stack([ld_pred, cl_pred, cd_pred]), cd_log
+
+
+# Mach grid constants derived from training data distributions.
+# See "low-drag CdMin gap" section in README.md for context.
+KNOWN_MACH_VALUES = [0.0, 0.10, 0.25, 0.50]
+MACH_EXTRAPOLATION_THRESHOLD = 0.02
+
+
+def mach_extrapolation_distance(mach_value: float) -> float:
+    """
+    Calculate the absolute distance from the nearest Mach value in the training dataset.
+
+    :param mach_value: The user-specified Mach number.
+    :return: The minimal distance from the known Mach values.
+    """
+    return min(abs(mach_value - m) for m in KNOWN_MACH_VALUES)
+

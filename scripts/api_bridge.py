@@ -68,6 +68,11 @@ def handle_predict(args):
             "y_lower": y_lower,
             "thickness": thickness,
             "camber": camber
+        },
+        "mach_warning": {
+            "extrapolated": features.mach_extrapolation_distance(args.mach) > features.MACH_EXTRAPOLATION_THRESHOLD,
+            "nearest_known_mach": min(features.KNOWN_MACH_VALUES, key=lambda m: abs(m - args.mach)),
+            "distance": features.mach_extrapolation_distance(args.mach),
         }
     }
     
@@ -115,7 +120,12 @@ def handle_optimize(args):
         
     payload = {
         "feasibility": results["feasibility"],
-        "candidates": candidates_payload
+        "candidates": candidates_payload,
+        "mach_warning": {
+            "extrapolated": features.mach_extrapolation_distance(args.mach) > features.MACH_EXTRAPOLATION_THRESHOLD,
+            "nearest_known_mach": min(features.KNOWN_MACH_VALUES, key=lambda m: abs(m - args.mach)),
+            "distance": features.mach_extrapolation_distance(args.mach),
+        }
     }
     
     print(json.dumps(payload, cls=NumpyEncoder))
