@@ -31,6 +31,9 @@ AeroML/
 │   └── test_forward_drift.py # Validation test script to verify predictions and check for drift
 ├── Data_Cache/              # Preprocessed dataset + train/val/test split manifest
 ├── Forward_outputs/         # Trained ensemble models + metrics
+├── frontend/                # Custom HTML/CSS/JS frontend files (landing page & workbench)
+├── backend/                 # Hono-based API gateway and static server running on Bun
+└── FRONTEND_BLUEPRINT.md    # Core frontend implementation roadmap and checklist
 ```
 
 ## Data Flow
@@ -64,12 +67,15 @@ AeroML/
   - [x] Pin exact working package versions in `requirements.txt` and `pyproject.toml`.
   - [x] Keep backwards compatibility and clean up legacy root-level runtime scripts.
 - [~] **Phase 3: Low-Drag CdMin Model Improvement (investigated, reverted)**
-  - [x] Diagnosed root cause: low-drag test slice CdMin R2 = -5.29, driven by a small number of severe outliers concentrated at Mach=0.5, where median CdMin is ~3x higher than at Mach=0 (wave-drag onset) and a global low-drag threshold catches a very different row share per Mach bucket (44% at Mach=0 vs 8% at Mach=0.5).
-  - [x] Tried: global low-drag reweighting, Mach05-boosted reweighting, Mach-conditional reweighting, dedicated-capacity architecture (shared trunk), fully independent CdMin model + new engineered features (Mach one-hot, Re-Mach interactions).
-  - [x] Result: all five approaches converged to roughly the same +1.0 to +1.4 R2 recovery on the low-drag slice, none cleared the ensemble gate. No convergence/quality signal available in the cached dataset to further investigate whether this is an XFOIL label-noise ceiling.
-  - [ ] Reverted all Phase 3 code changes -- shipped model is still the original `cd_loss_only` baseline ensemble. Full writeup in README.md under "The low-drag CdMin gap, and what I tried".
-  - [ ] Not yet done: a reverse-design-side guardrail flagging low-drag + Mach>=0.49 targets explicitly (the ensemble's uncertainty flag does not catch this failure mode, since all seeds are consistently biased the same way rather than disagreeing).
-  - [ ] Not yet done: actual XFOIL run-quality investigation for this regime (would need to re-run simulations with logging, out of scope for now).
+  - [x] Diagnosed root cause: low-drag test slice CdMin R2 = -5.29, driven by a small number of severe outliers concentrated at Mach=0.5.
+  - [x] Reverted all Phase 3 code changes -- model is still the original baseline ensemble.
+- [ ] **Phase 4: Custom Animated Frontend (Bun/Hono)**
+  - [ ] Implement design tokens & Bun/Hono backend gateway.
+  - [ ] Create Landing Page featuring the animated ASCII wind-tunnel loop.
+  - [ ] Build Pixel-Artsy Project Architecture visualization.
+  - [ ] Build Workbench Page with industrial CAD grid & suction/compression curve canvas.
+  - [ ] Connect predictions and optimization to python process runner.
+
 
 ## Data Models
 - **Caching Dataset:** NPZ file (`aeroml_xfoil_n9_dataset.npz`) containing:
