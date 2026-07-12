@@ -69,13 +69,15 @@ AeroML/
 - [~] **Phase 3: Low-Drag CdMin Model Improvement (investigated, reverted)**
   - [x] Diagnosed root cause: low-drag test slice CdMin R2 = -5.29, driven by a small number of severe outliers concentrated at Mach=0.5.
   - [x] Reverted all Phase 3 code changes -- model is still the original baseline ensemble.
-- [ ] **Phase 4: Custom Animated Frontend (Bun/Hono)**
-  - [ ] Implement design tokens & Bun/Hono backend gateway.
-  - [ ] Create Landing Page featuring the animated ASCII wind-tunnel loop.
-  - [ ] Build Pixel-Artsy Project Architecture visualization.
-  - [ ] Build Workbench Page with industrial CAD grid & suction/compression curve canvas.
-  - [ ] Connect predictions and optimization to python process runner.
-
+- [x] **Phase 4: Custom Animated Frontend (Bun/Hono)**
+  - [x] Implement design tokens & Bun/Hono backend gateway.
+  - [x] Create Landing Page with native WebGL dither wave background (fully standalone, zero-dependency, offline-ready).
+  - [x] Integrate high-fidelity canvas particle deflection simulator (adapted to Cherry Red & Maroon).
+  - [x] Build interactive codebase Repository Atlas map with line-stream animations and scanning sweeps.
+  - [x] Build Workbench Page with industrial CAD grid, scale labels, camber line, thickness indicators, and suction/compression curve canvas.
+  - [x] Connect predictions and optimization to python process runner.
+  - [x] Standardize colors (cotton, cherry-red, maroon, noir-black) across visualizer and graphing dashboard.
+  - [x] Polish branding names, replace obsolete "Vortex" labels with mature technical branding, add GitHub codebase link, and remove live indicators.
 
 ## Data Models
 - **Caching Dataset:** NPZ file (`aeroml_xfoil_n9_dataset.npz`) containing:

@@ -39,3 +39,10 @@ share/python-wheels/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Node dependencies
+node_modules/
+.npm/
+
+Aeroml hero prototype.html
+FRONTEND_BLUEPRINT.md
