@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroML — Machine Learning Airfoil Design & Optimization</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Unique elements for landing page */
+    .hero-container {
+      position: relative;
+      background-color: var(--noir-black);
+      border: var(--pixel-border);
+      box-shadow: var(--retro-shadow);
+      padding: 1.5rem;
+      margin-bottom: 3rem;
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      background-color: var(--maroon);
+      border-bottom: 3px solid var(--cotton);
+      margin: -1.5rem -1.5rem 1rem -1.5rem;
+      padding: 0.5rem 1.5rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.875rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border: 1px solid var(--cotton);
+    }
+
+    .terminal-dot:nth-child(1) { background-color: var(--cherry-red); }
+    .terminal-dot:nth-child(2) { background-color: var(--maroon); }
+    .terminal-dot:nth-child(3) { background-color: var(--cotton); }
+
+    .wind-tunnel-display {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.25;
+      white-space: pre-wrap;
+      background-color: #120e0e;
+      border: 2px solid var(--maroon);
+      padding: 1rem;
+      overflow-x: auto;
+      color: var(--cotton);
+      position: relative;
+    }
+
+    /* Animated scanline overlay for wind tunnel display */
+    .hero-container .terminal-header {
+      background: linear-gradient(135deg, var(--maroon) 0%, rgba(156, 28, 54, 0.7) 100%);
+    }
+
+    .hero-scanline {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(201, 16, 16, 0.4), transparent);
+      animation: scanline 4s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    @keyframes scanline {
+      0%   { top: 0%; opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Subtle glow on telemetry values */
+    .telemetry-value {
+      text-shadow: 0 0 8px rgba(237, 235, 221, 0.15);
+    }
+
+    /* Pulse dot animation */
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #88cc88;
+      animation: pulse-dot 2s ease-in-out infinite;
+      margin-right: 6px;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.825rem;
+    }
+
+    .telemetry-card {
+      background-color: rgba(99, 0, 0, 0.1);
+      border: 1px solid var(--maroon-alpha-40);
+      padding: 0.75rem;
+    }
+
+    .telemetry-label {
+      color: var(--maroon);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .telemetry-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--cotton);
+      margin-top: 2px;
+    }
+
+    /* Pixel Artsy Slack Interface style */
+    .slack-window {
+      background-color: var(--cotton);
+      color: var(--noir-black);
+      border: 3px solid var(--noir-black);
+      box-shadow: 6px 6px 0px 0px var(--noir-black);
+      font-family: var(--font-sans);
+      margin-top: 3rem;
+      overflow: hidden;
+    }
+
+    .slack-header {
+      background-color: var(--noir-black);
+      color: var(--cotton);
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .slack-sidebar {
+      background-color: #dedccf;
+      border-right: 3px solid var(--noir-black);
+      padding: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .slack-channels {
+      list-style: none;
+      margin-top: 1rem;
+    }
+
+    .slack-channels li {
+      padding: 4px 8px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .slack-channels li.active {
+      background-color: var(--cherry-red);
+      color: var(--cotton);
+    }
+
+    .slack-chat {
+      padding: 1.5rem;
+      background-color: var(--cotton);
+    }
+
+    .slack-user {
+      font-weight: bold;
+      color: var(--cherry-red);
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .slack-message-box {
+      background-color: white;
+      border: 3px solid var(--noir-black);
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    /* Table styling */
+    .metric-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .metric-table th, .metric-table td {
+      border: 2px solid var(--cotton);
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    .metric-table th {
+      background-color: var(--maroon);
+    }
+
+    .metric-table tr:nth-child(even) {
+      background-color: var(--cotton-alpha-10);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; padding-bottom: 1.5rem; border-bottom: 3px solid var(--cotton);">
+      <div>
+        <h1 class="heading-decorative" style="font-size: 2.2rem; font-weight: normal; line-height: 1;">AeroML</h1>
+        <p style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--cherry-red); text-transform: uppercase; margin-top: 4px; letter-spacing: 0.15em;">Surrogate-Guided Airfoil Design</p>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <a href="/workbench" class="btn-primary" style="text-decoration: none;">Launch Workbench</a>
+      </div>
+    </header>
+
+    <!-- Hero / ASCII Wind Tunnel Display -->
+    <section class="hero-container">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+        </div>
+        <span>Aerodynamic Flow Visualizer</span>
+      </div>
+
+      <div style="background-color: #120e0e; border: 2px solid var(--maroon); position: relative; overflow: hidden; height: 380px;">
+        <div class="hero-scanline"></div>
+        <canvas id="field" style="width: 100%; height: 100%; display: block;"></canvas>
+        <div style="position: absolute; left: 1.25rem; bottom: 1.25rem; font-family: var(--font-mono); font-size: 10px; color: rgba(237, 235, 221, 0.65); pointer-events: none; line-height: 1.6; background-color: rgba(27, 23, 23, 0.85); padding: 0.5rem 0.75rem; border: 1px solid var(--cotton-alpha-10);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--cherry-red);"></span>
+            <span>SUCTION SIDE / ACCELERATED FLOW</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--maroon);"></span>
+            <span>PRESSURE SIDE / COMPRESSED FLOW</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="telemetry-grid">
+        <div class="telemetry-card">
+          <div class="telemetry-label">Reynolds Number (Re)</div>
+          <div class="telemetry-value" id="telemetryRe">3,000,000</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">Mach Number (M)</div>
+          <div class="telemetry-value" id="telemetryMach">0.150</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">Airfoil Section</div>
+          <div class="telemetry-value" id="telemetryAirfoil">SD7062</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">Lift Coefficient (Cl)</div>
+          <div class="telemetry-value" id="telemetryCl">1.428</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">Drag Coefficient (Cd)</div>
+          <div class="telemetry-value" id="telemetryCd">0.0084</div>
+        </div>
+        <div class="telemetry-card">
+          <div class="telemetry-label">L/D Efficiency Ratio</div>
+          <div class="telemetry-value" id="telemetryLd">170.00</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Project Overview Details -->
+    <section class="grid-cols-2" style="margin-bottom: 4rem;">
+      <div class="pixel-card dither-bg">
+        <h2 style="font-size: 1.4rem; margin-bottom: 1rem; color: var(--cotton); letter-spacing: 0.05em;"><span style="color: var(--cherry-red); font-family: var(--font-mono); margin-right: 6px;">&gt;</span>How AeroML Works</h2>
+        <p style="font-size: 0.95rem; margin-bottom: 1.5rem;">
+          Normally, custom airfoil optimization requires executing slow numerical solvers (like XFOIL) repeatedly. AeroML bypasses this iteration bottleneck by training a fast, three-seed Deep MLP ensemble as a surrogate model of viscous XFOIL aerodynamic simulations. 
+        </p>
+        <p style="font-size: 0.95rem;">
+          Using this forward surrogate model, the reverse engine optimizes design targets using multi-restart batched Adam gradient searches across a 16-dimensional PCA-compressed geometry space, allowing you to synthesize custom high-efficiency profiles in milliseconds.
+        </p>
+      </div>
+
+      <div class="pixel-card-cherry">
+        <h2 style="font-size: 1.4rem; margin-bottom: 1rem; color: var(--cotton); letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;"><span class="status-pulse-red"></span>Model Accuracy</h2>
+        <p style="font-size: 0.95rem; margin-bottom: 1rem;">
+          Model metrics evaluated on held-out test datasets. Note that <code>CdMin</code> remains the hardest physical target to capture due to boundary-layer separation sensitivity.
+        </p>
+        <table class="metric-table">
+          <thead>
+            <tr>
+              <th>Target Parameter</th>
+              <th>Surrogate R² Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>LDMax</strong> (Max Lift-to-Drag Ratio)</td>
+              <td class="readout-value" style="color: var(--cotton);">~0.91</td>
+            </tr>
+            <tr>
+              <td><strong>ClMax</strong> (Max Lift Coefficient)</td>
+              <td class="readout-value" style="color: var(--cotton);">~0.87</td>
+            </tr>
+            <tr>
+              <td><strong>CdMin</strong> (Min Drag Coefficient)</td>
+              <td class="readout-value" style="color: var(--cotton);">~0.72</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Repository Atlas Section -->
+    <section class="atlas-container">
+      <div class="atlas-header">
+        <div class="atlas-title-area">
+          <h2>AeroML Repository Atlas</h2>
+          <p>Navigate the project like a map</p>
+        </div>
+        <a href="https://github.com/Sanidhyavijay24/AeroML" target="_blank" class="btn-github-atlas">
+          View on GitHub
+          <svg viewBox="0 0 24 24">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="atlas-layout">
+
+        <!-- Column 2: Codebase Map Area -->
+        <div class="atlas-map-wrapper">
+          <!-- Stylized hand-drawn vector background landscape -->
+          <svg class="map-bg-mountains" viewBox="0 0 540 400" preserveAspectRatio="none">
+            <defs>
+              <pattern id="dotPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="0.75" fill="#E5DEC9" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#dotPattern)" />
+            
+            <!-- Left Hill & tree drawing -->
+            <path d="M -20 180 C 40 140, 90 150, 130 200" />
+            <path d="M 50 160 L 50 135" stroke="#D3C9B4" stroke-width="1.2" />
+            <path d="M 40 135 C 32 115, 62 100, 68 115 C 78 105, 72 135, 50 135 Z" fill="#FCFAF7" stroke="#D3C9B4" stroke-width="1" />
+            <circle cx="45" cy="190" r="1.5" fill="#CBBFA5" />
+            
+            <!-- Right Hill & tree drawing -->
+            <path d="M 390 330 C 440 290, 480 300, 560 350" />
+            <path d="M 460 305 L 460 280" stroke="#D3C9B4" stroke-width="1.2" />
+            <path d="M 450 280 C 442 260, 472 245, 478 260 C 488 250, 482 280, 460 280 Z" fill="#FCFAF7" stroke="#D3C9B4" stroke-width="1" />
+            
+            <!-- Tiny mountain peaks in background -->
+            <path d="M 120 70 L 135 50 L 150 70 Z" fill="#FCFAF7" stroke="#EADFD0" />
+          <div class="atlas-nodes-container">
+            <!-- Root node (AeroML/) -->
+            <div class="map-node active" style="left: calc(50% - 75px); top: 2%;" data-node="root">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--cherry-red)" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                AeroML/
+              </div>
+              <div class="map-node-subtitle">Repository Root</div>
+            </div>
+
+            <!-- Orthogonal SVG connection tree -->
+            <svg class="atlas-connections-svg">
+              <!-- Trunk splits out from root to three main trunks -->
+              <path d="M 50% 10% L 50% 18% L 22% 18% L 22% 25%" />
+              <path d="M 50% 10% L 50% 22%" />
+              <path d="M 50% 10% L 50% 18% L 82% 18% L 82% 25%" />
+              
+              <!-- Left Column: Data Cache -> Outputs -->
+              <path d="M 22% 38% L 22% 55%" />
+              
+              <!-- Center Column: src -> scripts -> tests -->
+              <path d="M 50% 35% L 50% 48%" />
+              <path d="M 50% 61% L 50% 72%" />
+              
+              <!-- Right Column: backend -> frontend -->
+              <path d="M 82% 38% L 82% 55%" />
+            </svg>
+
+            <!-- Column 1 (Left): Data Cache & Outputs -->
+            <div class="map-node" style="left: 8%; top: 25%;" data-node="data">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#1A73E8" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                Data_Cache/
+              </div>
+              <div class="map-node-subtitle">XFOIL datasets</div>
+              <div class="map-node-files">2 files</div>
+            </div>
+
+            <div class="map-node" style="left: 8%; top: 55%;" data-node="outputs">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                Forward_outputs/
+              </div>
+              <div class="map-node-subtitle">Trained ensemble</div>
+              <div class="map-node-files">4 files</div>
+            </div>
+
+            <!-- Column 2 (Center): src -> scripts -> tests (Centered Horizontally) -->
+            <div class="map-node" style="left: calc(50% - 75px); top: 22%;" data-node="src">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#6C63FF" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                src/
+              </div>
+              <div class="map-node-subtitle">Core ML modules</div>
+              <div class="map-node-files">8 files</div>
+            </div>
+
+            <div class="map-node" style="left: calc(50% - 75px); top: 48%;" data-node="scripts">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00B0FF" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                scripts/
+              </div>
+              <div class="map-node-subtitle">CLI entrypoints</div>
+              <div class="map-node-files">3 files</div>
+            </div>
+
+            <div class="map-node" style="left: calc(50% - 75px); top: 72%;" data-node="tests">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                tests/
+              </div>
+              <div class="map-node-subtitle">Drift validations</div>
+              <div class="map-node-files">2 files</div>
+            </div>
+
+            <!-- Column 3 (Right): backend -> frontend -->
+            <div class="map-node" style="left: 68%; top: 25%;" data-node="backend">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#F9AB00" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                backend/
+              </div>
+              <div class="map-node-subtitle">Hono static server</div>
+              <div class="map-node-files">4 files</div>
+            </div>
+
+            <div class="map-node" style="left: 68%; top: 55%;" data-node="frontend">
+              <div class="map-node-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#FF4081" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                frontend/
+              </div>
+              <div class="map-node-subtitle">Web interfaces</div>
+              <div class="map-node-files">4 files</div>
+            </div>
+          </div>
+
+          <!-- Document badges at the bottom of the map -->
+          <div class="atlas-files-row">
+            <span class="atlas-file-badge">📄 README.md</span>
+            <span class="atlas-file-badge">📄 requirements.txt</span>
+            <span class="atlas-file-badge">📄 context.md</span>
+            <span class="atlas-file-badge">📄 pyproject.toml</span>
+            <span class="atlas-file-badge">📄 .gitignore</span>
+          </div>
+        </div>
+
+        <!-- Column 3: Active Node Inspector Card -->
+        <div class="inspector-card">
+          <div class="inspector-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            <span id="inspectTitle">AeroML/</span>
+          </div>
+          
+          <div class="inspector-field">
+            <div class="inspector-label">Path</div>
+            <div id="inspectPath" class="inspector-value-mono">./ (Project Root)</div>
+          </div>
+
+          <div class="inspector-field">
+            <div class="inspector-label">Purpose</div>
+            <div id="inspectPurpose" class="inspector-value">The core orchestration root of the AeroML project housing optimization modules, data split pipelines, and flow visualizer interfaces.</div>
+          </div>
+
+          <div class="inspector-field">
+            <div class="inspector-label">Key Modules</div>
+            <div id="inspectModules" class="inspector-value" style="font-family: var(--font-mono); font-size: 0.775rem;">README.md, requirements.txt, LICENSE, context.md, pyproject.toml</div>
+          </div>
+
+          <div style="border-top: 1px solid #F0ECE6; padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-top: auto;">
+            <div>
+              <span class="inspector-label" style="display:block; margin:0;">Size</span>
+              <span id="inspectSize" style="font-family: var(--font-mono); font-weight: bold; color: #1B1717;">1.2 MB</span>
+            </div>
+            <div>
+              <span class="inspector-label" style="display:block; margin:0; text-align:right;">Status</span>
+              <span id="inspectStatus" class="inspector-badge active">active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="margin-top: 4.5rem; padding: 0.75rem 0; border-top: 1px solid rgba(237, 235, 221, 0.15); display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 0.725rem; color: rgba(237, 235, 221, 0.65);">
+      <span>© 2025 AeroML — Open-Source Airfoil Optimization</span>
+      <span>Python · TensorFlow · Bun · Hono</span>
+    </footer>
+  </div>
+
+  <!-- Load background dither waves -->
+  <script src="/dither-bg.js"></script>
+
+  <!-- Load landing page animations -->
+  <script src="/landing.js"></script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroML — Drafting Workbench</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Workbench Page unique styles */
+    body {
+      background-color: transparent;
+    }
+
+    .workbench-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr 340px;
+      gap: 1.5rem;
+      height: calc(100vh - 160px);
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .workbench-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+    }
+
+    .sidebar-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      overflow-y: auto;
+      max-height: 100%;
+      padding-right: 4px;
+    }
+
+    .canvas-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border: 1px solid var(--cotton-alpha-20);
+      background-color: var(--noir-black);
+      position: relative;
+    }
+
+    .canvas-header {
+      background-color: var(--maroon);
+      border-bottom: 1px solid var(--cotton-alpha-20);
+      padding: 0.5rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cad-canvas-wrapper {
+      flex: 1;
+      position: relative;
+      background-color: #120f0f;
+      overflow: hidden;
+    }
+
+    #cadCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Range controls styling */
+    .slider-group {
+      margin-bottom: 1rem;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Terminal logs style */
+    .log-panel {
+      height: 140px;
+      background-color: #120f0f;
+      border: 1px solid var(--cotton-alpha-20);
+      font-family: var(--font-mono);
+      font-size: 0.775rem;
+      padding: 0.75rem;
+      overflow-y: auto;
+      color: var(--cotton);
+    }
+
+    .log-entry {
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+
+    .log-entry.info { color: var(--cotton); }
+    .log-entry.success { color: #88cc88; }
+    .log-entry.error { color: #ff8888; }
+    .log-entry.warning { color: #ffcc66; }
+
+    /* Reliability dials / readouts */
+    .metric-row {
+      border-bottom: 1px solid var(--cotton-alpha-10);
+      padding: 0.75rem 0;
+    }
+
+    .metric-row:last-child {
+      border-bottom: none;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--maroon);
+      font-weight: 700;
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .metric-value-box {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--cotton);
+    }
+
+    .reliability-bar-container {
+      width: 100%;
+      height: 4px;
+      background-color: var(--cotton-alpha-10);
+      margin-top: 4px;
+      position: relative;
+    }
+
+    .reliability-bar-fill {
+      height: 100%;
+      background-color: var(--cherry-red);
+      width: 0%;
+      transition: width var(--transition-normal);
+    }
+
+    /* Tab Switch Styling */
+    .tab-button {
+      background-color: transparent;
+      color: var(--cotton);
+      border: 1px solid var(--cotton-alpha-20);
+      padding: 0.5rem 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .tab-button.active {
+      background-color: var(--maroon);
+      border-color: var(--cherry-red);
+      font-weight: 700;
+    }
+
+    .tab-button:hover:not(.active) {
+      background-color: var(--cotton-alpha-10);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" style="max-width: 100%; padding: 1.5rem 2rem 2rem 2rem;">
+    <!-- Navigation / Header -->
+    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--cotton-alpha-20);">
+      <div style="display: flex; align-items: center; gap: 2rem;">
+        <h1 class="heading-decorative" style="font-size: 1.75rem; font-weight: normal; margin: 0; line-height: 1;"><a href="/" style="text-decoration: none; color: var(--cotton);">AeroML</a></h1>
+        <span style="font-family: var(--font-mono); font-size: 0.75rem; border-left: 1px solid var(--cotton-alpha-20); padding-left: 2rem; color: var(--cherry-red); text-transform: uppercase; letter-spacing: 0.05em;">Surrogate Design Workspace</span>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 0.75rem; display: flex; gap: 2rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(237, 235, 221, 0.65);">
+        <span>System Status: <span style="color: #88cc88;">Live</span></span>
+      </div>
+    </header>
+
+    <!-- Workspace Mode Switch Tabs -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
+      <button class="tab-button active" id="tabForward">Forward Analysis Mode</button>
+      <button class="tab-button" id="tabReverse">Reverse Optimization Mode</button>
+    </div>
+
+    <!-- Main Workspace Layout -->
+    <div class="workbench-layout">
+      
+      <!-- COLUMN 1: MODE INPUT CONTROL PANELS -->
+      <div class="sidebar-panel">
+        
+        <!-- Forward Analysis Input Panel -->
+        <div id="panelForwardInputs" class="cad-panel">
+          <h3 style="font-size: 1rem; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">FORWARD ANALYSIS</h3>
+          
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--maroon);">AIRFOIL GEOMETRY (.dat)</label>
+            <input type="file" id="datFileUpload" accept=".dat" style="display: none;">
+            <button class="btn-cad" style="width: 100%; text-align: center; border-style: dashed; border-width: 2px;" onclick="document.getElementById('datFileUpload').click()">
+              Upload Airfoil Coordinates
+            </button>
+            <div id="fileUploadStatus" style="font-family: var(--font-mono); font-size: 0.75rem; margin-top: 4px; color: var(--cherry-red); display: none;">
+              No file loaded
+            </div>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Mach Number</span>
+              <span id="machPredictVal" class="readout-value">0.150</span>
+            </div>
+            <input type="range" id="machPredictSlider" class="cad-slider" min="0.0" max="0.5" step="0.01" value="0.15">
+          </div>
+
+          <div class="slider-group" style="margin-bottom: 1.5rem;">
+            <div class="slider-header">
+              <span>Reynolds Number (Re x10⁶)</span>
+              <span id="rePredictVal" class="readout-value">2.00</span>
+            </div>
+            <input type="range" id="rePredictSlider" class="cad-slider" min="0.1" max="6.0" step="0.05" value="2.0">
+          </div>
+
+          <button class="btn-pixel" id="btnRunPrediction" style="width: 100%;" disabled>Run Simulation</button>
+        </div>
+
+        <!-- Reverse Optimization Input Panel -->
+        <div id="panelReverseInputs" class="cad-panel hidden">
+          <h3 style="font-size: 1rem; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">REVERSE OPTIMIZATION</h3>
+          
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Target LDMax (Cl/Cd)</span>
+              <span id="targetLdVal" class="readout-value">120</span>
+            </div>
+            <input type="range" id="targetLdSlider" class="cad-slider" min="60" max="220" step="5" value="120">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Target ClMax</span>
+              <span id="targetClVal" class="readout-value">1.40</span>
+            </div>
+            <input type="range" id="targetClSlider" class="cad-slider" min="0.8" max="2.2" step="0.05" value="1.4">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Target CdMin</span>
+              <span id="targetCdVal" class="readout-value">0.008</span>
+            </div>
+            <input type="range" id="targetCdSlider" class="cad-slider" min="0.004" max="0.03" step="0.001" value="0.008">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Flow Mach (M)</span>
+              <span id="machOptimizeVal" class="readout-value">0.150</span>
+            </div>
+            <input type="range" id="machOptimizeSlider" class="cad-slider" min="0.0" max="0.5" step="0.01" value="0.15">
+          </div>
+
+          <div class="slider-group" style="margin-bottom: 1.5rem;">
+            <div class="slider-header">
+              <span>Flow Reynolds (Re x10⁶)</span>
+              <span id="reOptimizeVal" class="readout-value">3.00</span>
+            </div>
+            <input type="range" id="reOptimizeSlider" class="cad-slider" min="0.1" max="6.0" step="0.05" value="3.0">
+          </div>
+
+          <button class="btn-pixel" id="btnRunOptimization" style="width: 100%;">Optimize Profile</button>
+        </div>
+
+      </div>
+
+      <!-- COLUMN 2: TECHNICAL GRID GRAPHING VIEWPORT (Shared) -->
+      <div style="display: flex; flex-direction: column; gap: 1rem; height: 100%;">
+        <div class="canvas-container">
+          <div class="canvas-header">
+            <span>DRAFTING VIEWPORT [GRID UNITS: STANDARD]</span>
+            <div style="display: flex; gap: 1rem; font-size: 0.75rem; align-items: center;">
+              <span style="display: flex; align-items: center;"><span style="display: inline-flex; align-items: center; justify-content: center; background-color: var(--noir-black); border: 1px solid rgba(237, 235, 221, 0.25); padding: 2px 6px; border-radius: 2px; margin-right: 6px; height: 16px; min-width: 28px; box-sizing: border-box;"><span style="color: var(--cherry-red); font-weight: bold; line-height: 1; font-size: 0.7rem;">━━</span></span> SUCTION</span>
+              <span style="display: flex; align-items: center;"><span style="display: inline-flex; align-items: center; justify-content: center; background-color: var(--noir-black); border: 1px solid rgba(237, 235, 221, 0.25); padding: 2px 6px; border-radius: 2px; margin-right: 6px; height: 16px; min-width: 28px; box-sizing: border-box;"><span style="color: var(--maroon); font-weight: bold; line-height: 1; font-size: 0.7rem;">┅┅</span></span> COMPRESSION</span>
+              <span style="display: flex; align-items: center;"><span style="display: inline-flex; align-items: center; justify-content: center; background-color: var(--noir-black); border: 1px solid rgba(237, 235, 221, 0.25); padding: 2px 6px; border-radius: 2px; margin-right: 6px; height: 16px; min-width: 28px; box-sizing: border-box;"><span style="color: rgba(237, 235, 221, 0.35); font-weight: bold; line-height: 1; font-size: 0.7rem;">┈┈</span></span> CAMBER</span>
+            </div>
+          </div>
+          <div class="cad-canvas-wrapper">
+            <canvas id="cadCanvas"></canvas>
+          </div>
+        </div>
+
+        <div class="log-panel" id="terminalLog">
+          <div class="log-entry info">> Initialized AeroML surrogate engine.</div>
+          <div class="log-entry info">> System operational parameters read successfully.</div>
+        </div>
+      </div>
+
+      <!-- COLUMN 3: READOUT & OUTPUT RESULT PANELS -->
+      <div class="sidebar-panel">
+        
+        <!-- Forward Analysis Output Panel -->
+        <div id="panelForwardOutputs" class="cad-panel" style="flex: none; height: auto;">
+          <h3 style="font-size: 1rem; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">SIMULATION READOUT</h3>
+          <div id="predictionMetrics">
+            <div class="metric-row">
+              <div class="metric-header">
+                <span class="metric-label">LDMax (Cl/Cd Max)</span>
+                <div class="metric-value-box" id="readoutPredictLd">-</div>
+              </div>
+              <div class="reliability-bar-container">
+                <div class="reliability-bar-fill" id="barPredictLd"></div>
+              </div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-header">
+                <span class="metric-label">ClMax (Max Lift)</span>
+                <div class="metric-value-box" id="readoutPredictCl">-</div>
+              </div>
+              <div class="reliability-bar-container">
+                <div class="reliability-bar-fill" id="barPredictCl"></div>
+              </div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-header">
+                <span class="metric-label">CdMin (Min Drag)</span>
+                <div class="metric-value-box" id="readoutPredictCd">-</div>
+              </div>
+              <div class="reliability-bar-container">
+                <div class="reliability-bar-fill" id="barPredictCd"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reverse Optimization Output Panel -->
+        <div id="panelReverseOutputs" class="hidden" style="display: flex; flex-direction: column; gap: 1.5rem; height: auto;">
+          
+          <div class="cad-panel" style="display: flex; flex-direction: column;">
+            <h3 style="font-size: 1rem; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">OPTIMIZATION CANDIDATES</h3>
+            <div style="flex: 1; min-height: 100px; overflow-y: auto; margin-bottom: 1rem;">
+              <select id="candidateSelect" size="5" style="width: 100%; height: 100%; background: #120f0f; color: var(--cotton); border: 1px solid var(--cotton-alpha-20); font-family: var(--font-mono); padding: 0.5rem; outline: none; font-size: 0.8rem;" disabled>
+                <option value="">No candidates available</option>
+              </select>
+            </div>
+            <button class="btn-cad" id="btnExportDat" style="width: 100%; text-align: center;" disabled>Export Optimal .dat</button>
+          </div>
+
+          <div class="cad-panel">
+            <h3 style="font-size: 1rem; border-bottom: 2px solid var(--maroon); padding-bottom: 0.5rem; margin-bottom: 1rem;">CANDIDATE READOUT</h3>
+            <div>
+              <div class="metric-row">
+                <div class="metric-header">
+                  <span class="metric-label">LDMax (Cl/Cd Max)</span>
+                  <div class="metric-value-box" id="readoutOptimizeLd">-</div>
+                </div>
+                <div class="reliability-bar-container">
+                  <div class="reliability-bar-fill" id="barOptimizeLd"></div>
+                </div>
+              </div>
+              <div class="metric-row">
+                <div class="metric-header">
+                  <span class="metric-label">ClMax (Max Lift)</span>
+                  <div class="metric-value-box" id="readoutOptimizeCl">-</div>
+                </div>
+                <div class="reliability-bar-container">
+                  <div class="reliability-bar-fill" id="barOptimizeCl"></div>
+                </div>
+              </div>
+              <div class="metric-row">
+                <div class="metric-header">
+                  <span class="metric-label">CdMin (Min Drag)</span>
+                  <div class="metric-value-box" id="readoutOptimizeCd">-</div>
+                </div>
+                <div class="reliability-bar-container">
+                  <div class="reliability-bar-fill" id="barOptimizeCd"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Load background dither waves -->
+  <script src="/dither-bg.js"></script>
+
+  <script src="/workbench.js"></script>
+</body>
+</html>

@@ -1,0 +1,692 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+/* ==========================================================================
+   CSS Design Tokens & Core Variables
+   ========================================================================== */
+:root {
+  /* Color Palette */
+  --cotton: #EDEBDD;
+  --cherry-red: #c91010;
+  --maroon: #9c1c36;
+  --noir-black: #1B1717;
+
+  /* Transparent Color Variations */
+  --cotton-alpha-10: rgba(237, 235, 221, 0.1);
+  --cotton-alpha-20: rgba(237, 235, 221, 0.2);
+  --cherry-red-alpha-20: rgba(201, 16, 16, 0.2);
+  --maroon-alpha-40: rgba(156, 28, 54, 0.4);
+
+  /* Fonts */
+  --font-display: 'Cinzel Decorative', serif;
+  --font-sans: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Borders & Shadows */
+  --pixel-border: 3px solid var(--cotton);
+  --retro-shadow: 4px 4px 0px 0px var(--cotton);
+  --accent-shadow: 4px 4px 0px 0px var(--cherry-red);
+}
+
+/* ==========================================================================
+   Reset & Base Styles
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background-color: var(--noir-black);
+}
+
+body {
+  background-color: transparent;
+  color: var(--cotton);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--noir-black);
+  border-left: 1px solid var(--cotton-alpha-10);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--maroon);
+  border: 1px solid var(--cotton);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cherry-red);
+}
+
+/* ==========================================================================
+   Typography & Headings
+   ========================================================================== */
+h1, h2, h3, h4 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.heading-decorative {
+  font-family: var(--font-display);
+  color: var(--cotton);
+  letter-spacing: 0.05em;
+}
+
+.heading-terminal {
+  font-family: var(--font-mono);
+  color: var(--cherry-red);
+}
+
+/* ==========================================================================
+   Structural Layout & Grid System
+   ========================================================================== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.grid-cols-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Aesthetic Elements: Retro / Pixel-Art Mode
+   ========================================================================== */
+.pixel-card {
+  background-color: var(--noir-black);
+  border: var(--pixel-border);
+  box-shadow: var(--retro-shadow);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-normal) cubic-bezier(0.2, 0.8, 0.2, 1), 
+              box-shadow var(--transition-normal) cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color var(--transition-normal);
+}
+
+.pixel-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0px 0px var(--cotton);
+  border-color: var(--cotton);
+}
+
+.pixel-card-cherry {
+  background-color: var(--noir-black);
+  border: 3px solid var(--cherry-red);
+  box-shadow: var(--accent-shadow);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-normal) cubic-bezier(0.2, 0.8, 0.2, 1), 
+              box-shadow var(--transition-normal) cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color var(--transition-normal);
+}
+
+.pixel-card-cherry:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 0 0 16px rgba(201, 16, 16, 0.35), 8px 8px 0px 0px var(--cherry-red);
+  border-color: var(--cotton);
+}
+
+/* Dithering Texture Helper with Slow Parallax Shift */
+@keyframes ditherShift {
+  from { background-position: 0 0; }
+  to { background-position: 16px 16px; }
+}
+
+.dither-bg {
+  background-image: radial-gradient(var(--cotton-alpha-20) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.pixel-card:hover.dither-bg {
+  animation: ditherShift 6s linear infinite;
+}
+
+/* Table Hover Interactive Animations */
+.metric-table tr {
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.metric-table tbody tr:hover {
+  background-color: rgba(201, 16, 16, 0.12) !important;
+  transform: translateX(4px);
+}
+
+.metric-table tbody tr:hover td {
+  color: var(--cotton) !important;
+}
+
+/* Telemetry Dashboard Alerts & Pulses */
+.status-pulse-red {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--cherry-red);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--cherry-red);
+  animation: pulseRed 2s infinite ease-in-out;
+}
+
+@keyframes pulseRed {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 6px var(--cherry-red);
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.35;
+    box-shadow: 0 0 2px var(--cherry-red);
+  }
+}
+
+/* ==========================================================================
+   Aesthetic Elements: Industrial CAD Mode
+   ========================================================================== */
+.cad-grid {
+  position: relative;
+  background-color: #120f0f;
+  background-image: 
+    linear-gradient(var(--cotton-alpha-10) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cotton-alpha-10) 1px, transparent 1px);
+  background-size: 20px 20px;
+  border: 1px solid var(--cotton-alpha-20);
+}
+
+.cad-panel {
+  background-color: rgba(27, 23, 23, 0.9);
+  border: 1px solid var(--cotton-alpha-20);
+  border-top: 4px solid var(--maroon);
+  padding: 1.25rem;
+}
+
+.readout-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--cotton);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--cherry-red);
+  color: var(--cotton);
+  border: 1px solid var(--cherry-red);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.775rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-primary:hover {
+  background-color: var(--maroon);
+  border-color: var(--cherry-red);
+  box-shadow: 0 0 12px rgba(201, 16, 16, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--cotton);
+  border: 1px solid var(--cotton-alpha-20);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.775rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  background-color: var(--cotton-alpha-10);
+  border-color: rgba(237, 235, 221, 0.4);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px);
+}
+
+.btn-pixel {
+  display: inline-block;
+  background-color: var(--cotton);
+  color: var(--noir-black);
+  border: 3px solid var(--noir-black);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 3px 3px 0px 0px var(--cherry-red);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-pixel:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px var(--cherry-red);
+}
+
+.btn-pixel:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px var(--cherry-red);
+}
+
+.btn-cad {
+  background-color: transparent;
+  color: var(--cotton);
+  border: 1px solid var(--cotton-alpha-20);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-cad:hover {
+  background-color: var(--maroon);
+  border-color: var(--cherry-red);
+}
+
+/* Slider Controls */
+.cad-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--cotton-alpha-20);
+  outline: none;
+  border: none;
+}
+
+.cad-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 24px;
+  background: var(--cotton);
+  border: 1px solid var(--noir-black);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.cad-slider::-webkit-slider-thumb:hover {
+  background: var(--cherry-red);
+}
+
+/* ==========================================================================
+   Global Helper Classes
+   ========================================================================== */
+.text-cotton { color: var(--cotton); }
+.text-cherry { color: var(--cherry-red); }
+.text-maroon { color: var(--maroon); }
+
+.bg-noir { background-color: var(--noir-black); }
+.bg-maroon { background-color: var(--maroon); }
+
+.font-mono { font-family: var(--font-mono); }
+
+/* ==========================================================================
+   Aesthetic Elements: Interactive Repository Atlas Map (Premium Light Theme)
+   ========================================================================== */
+.atlas-container {
+  background-color: #FAF8F5;
+  color: #2D2727;
+  border: 3px solid var(--noir-black);
+  border-radius: 0px;
+  box-shadow: 6px 6px 0px 0px var(--cherry-red);
+  padding: 1.75rem 2rem 2rem 2rem;
+  margin-top: 3.5rem;
+  margin-bottom: 4.5rem;
+}
+
+.atlas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.atlas-title-area h2 {
+  font-family: var(--font-sans);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #1B1717;
+  margin-bottom: 0.25rem;
+}
+
+.atlas-title-area p {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: #7D7575;
+}
+
+.btn-github-atlas {
+  display: inline-flex;
+  align-items: center;
+  background-color: #ffffff;
+  color: #1B1717;
+  border: 2px solid var(--noir-black);
+  border-radius: 0px;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 2.5px 2.5px 0px 0px var(--cherry-red);
+  transition: all var(--transition-fast);
+}
+
+.btn-github-atlas:hover {
+  background-color: #FAF8F5;
+  transform: translate(-1px, -1px);
+  box-shadow: 3.5px 3.5px 0px 0px var(--cherry-red);
+}
+
+.btn-github-atlas svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  margin-left: 8px;
+}
+
+.atlas-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.25rem;
+  margin-top: 0;
+}
+
+@media (max-width: 1024px) {
+  .atlas-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Central Map */
+.atlas-map-wrapper {
+  background-color: #FCFAF7;
+  border: 1px solid #E3DFD8;
+  border-radius: 8px;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  height: 460px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.01);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Mountain line styling for the map background */
+.map-bg-mountains {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.75;
+}
+
+.map-bg-mountains path {
+  fill: none;
+  stroke: #EADFD0;
+  stroke-width: 1;
+}
+
+.map-bg-mountains text {
+  font-family: var(--font-mono);
+  font-weight: bold;
+}
+
+.atlas-nodes-container {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+/* Light theme rounded node cards */
+.map-node {
+  position: absolute;
+  background-color: #ffffff;
+  border: 2px solid var(--noir-black);
+  border-radius: 0px;
+  padding: 0.65rem 0.85rem;
+  width: 150px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 2.5px 2.5px 0px 0px rgba(27, 23, 23, 0.15);
+  transition: all var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.map-node:hover {
+  border-color: var(--noir-black);
+  box-shadow: 4px 4px 0px 0px var(--cherry-red);
+  transform: translateY(-2px);
+}
+
+.map-node.active {
+  border-color: var(--noir-black);
+  box-shadow: 4px 4px 0px 0px var(--cherry-red);
+  transform: translateY(-1px);
+}
+
+/* Node header title with custom icons */
+.map-node-title {
+  font-weight: 700;
+  color: #1B1717;
+  font-size: 0.825rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-node-title svg {
+  width: 14px;
+  height: 14px;
+}
+
+.map-node-subtitle {
+  font-size: 0.68rem;
+  color: #7D7575;
+  line-height: 1.25;
+}
+
+.map-node-files {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: bold;
+  color: #1B1717;
+  margin-top: 4px;
+  background-color: #FCFAF7;
+  border: 1px solid #E3DFD8;
+  border-radius: 4px;
+  padding: 1px 4px;
+  align-self: flex-start;
+}
+
+/* Connection canvas lines - subtle dotted layout */
+.atlas-connections-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.atlas-connections-svg path {
+  fill: none;
+  stroke: #C7C2BA;
+  stroke-width: 1.2;
+  stroke-dasharray: 2 4;
+}
+
+.atlas-files-row {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #EAE6DF;
+  z-index: 5;
+  margin-top: auto;
+  overflow-x: auto;
+}
+
+.atlas-file-badge {
+  background-color: #ffffff;
+  border: 1px solid #E3DFD8;
+  color: #4A4545;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+/* Inspector Card */
+.inspector-card {
+  background-color: #ffffff !important;
+  border: 3px solid var(--noir-black) !important;
+  border-radius: 0px !important;
+  box-shadow: 4px 4px 0px 0px var(--cotton) !important;
+  padding: 1.25rem;
+  height: 100%;
+}
+
+.inspector-header {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1B1717;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #F0ECE6;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.inspector-header svg {
+  width: 16px;
+  height: 16px;
+  color: #7D7575;
+}
+
+.inspector-field {
+  margin-bottom: 1rem;
+}
+
+.inspector-label {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #7D7575;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.inspector-value {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: #2D2727;
+  line-height: 1.45;
+}
+
+.inspector-value-mono {
+  font-family: var(--font-mono);
+  font-size: 0.725rem;
+  background-color: #FCFAF7;
+  color: #2d2727;
+  padding: 4px 6px;
+  border: 1px solid #E3DFD8;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.inspector-badge {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: bold;
+  text-transform: lowercase;
+  padding: 2px 8px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.inspector-badge.active {
+  background-color: #E8F5E9;
+  color: #2E7D32;
+}
+
+.inspector-badge.stable {
+  background-color: #EBF3FC;
+  color: #1A73E8;
+}
+
+.inspector-badge.cached {
+  background-color: #FFF3E0;
+  color: #E65100;
+}
+
+/* Animation utilities */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
