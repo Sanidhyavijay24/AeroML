@@ -63,6 +63,13 @@ AeroML/
   - [x] Implement CLI reverse search script `scripts/run_reverse.py`.
   - [x] Pin exact working package versions in `requirements.txt` and `pyproject.toml`.
   - [x] Keep backwards compatibility and clean up legacy root-level runtime scripts.
+- [~] **Phase 3: Low-Drag CdMin Model Improvement (investigated, reverted)**
+  - [x] Diagnosed root cause: low-drag test slice CdMin R2 = -5.29, driven by a small number of severe outliers concentrated at Mach=0.5, where median CdMin is ~3x higher than at Mach=0 (wave-drag onset) and a global low-drag threshold catches a very different row share per Mach bucket (44% at Mach=0 vs 8% at Mach=0.5).
+  - [x] Tried: global low-drag reweighting, Mach05-boosted reweighting, Mach-conditional reweighting, dedicated-capacity architecture (shared trunk), fully independent CdMin model + new engineered features (Mach one-hot, Re-Mach interactions).
+  - [x] Result: all five approaches converged to roughly the same +1.0 to +1.4 R2 recovery on the low-drag slice, none cleared the ensemble gate. No convergence/quality signal available in the cached dataset to further investigate whether this is an XFOIL label-noise ceiling.
+  - [ ] Reverted all Phase 3 code changes -- shipped model is still the original `cd_loss_only` baseline ensemble. Full writeup in README.md under "The low-drag CdMin gap, and what I tried".
+  - [ ] Not yet done: a reverse-design-side guardrail flagging low-drag + Mach>=0.49 targets explicitly (the ensemble's uncertainty flag does not catch this failure mode, since all seeds are consistently biased the same way rather than disagreeing).
+  - [ ] Not yet done: actual XFOIL run-quality investigation for this regime (would need to re-run simulations with logging, out of scope for now).
 
 ## Data Models
 - **Caching Dataset:** NPZ file (`aeroml_xfoil_n9_dataset.npz`) containing:
@@ -74,3 +81,5 @@ AeroML/
 
 ## Open Issues / Technical Debt
 - **TensorFlow Retracing Warn:** Retracing warnings are raised on native Windows if tf.functions are compiled repeatedly inside loops (managed in `ForwardV3Predictor` via pre-tracing compilation during loading).
+- **Low-drag CdMin gap (known limitation, investigated):** CdMin R2 on the low-drag test slice is -5.29, concentrated at Mach=0.5. Five modeling approaches were tried (see Phase 3 above and README.md) and all plateaued at roughly the same partial recovery. Current working theory is a data/label ceiling (XFOIL reliability in a low-Reynolds, near-transonic, low-drag regime) rather than something fixable with more model capacity or reweighting, but this isn't confirmed -- the cached dataset has no run-quality signal to check it directly. Do not re-attempt the same reweighting/dedicated-capacity/independent-model approaches without new information; they've already been tried and characterized.
+- **Reverse-design blind spot:** `passes_uncertainty` in `ReverseV3Designer` is based on cross-seed ensemble disagreement, which does not catch the low-drag/Mach>=0.49 failure mode above, since all seeds are consistently biased the same direction rather than disagreeing. No explicit guardrail exists yet for this specific region -- worth adding before this is used somewhere the failure mode matters (e.g. a public-facing frontend).

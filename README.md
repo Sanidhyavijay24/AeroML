@@ -31,7 +31,24 @@ The forward model is an ensemble of 3 seeds, and on held-out test data it lands 
 | ClMax | ~0.87 |
 | CdMin | ~0.72 |
 
-`CdMin` is the harder target of the three — drag is just noisier and more sensitive to fine geometry detail than lift — and it's the one I'm still actively improving.
+`CdMin` is the harder target of the three — drag is just noisier and more sensitive to fine geometry detail than lift. It has a specific, documented weak spot; see below.
+
+## The low-drag CdMin gap, and what I tried
+
+Aggregate `CdMin` R² (~0.72) looks fine, but it hides a real problem: restricted to just the lowest-drag quarter of the test set, `CdMin` R² collapses to **-5.29** — far worse than just predicting the mean. I dug into this properly rather than letting it sit as a footnote, so here's what I found and what I tried.
+
+**Diagnosis.** The bad R² isn't uniform badness — `RMSE/MAE` on that slice is ~2.4x higher than you'd expect from well-behaved errors, meaning a relatively small number of severe outlier predictions are dragging the squared-error metrics down while the median prediction is actually reasonable (~74% of predictions land within 25% of the true value). Digging into the worst individual predictions, the pattern was stark: almost all of them were at Mach=0.5. `CdMin`'s median value roughly triples from Mach=0.0 to Mach=0.5 (wave-drag/compressibility onset, physically expected), and a *global* low-drag threshold catches a very different share of rows depending on Mach — about 44% of Mach=0 rows qualify as "low-drag," but only 8% of Mach=0.5 rows do. The model was essentially defaulting to the majority high-drag pattern at Mach=0.5 and missing the rare genuinely-low-drag cases there.
+
+**What I tried, roughly in order:**
+1. Loss reweighting toward low-drag rows (global threshold) — recovered some of the R² gap.
+2. Reweighting further boosted for Mach≥0.49 rows specifically — similar result.
+3. A properly Mach-conditional low-drag threshold (weight rows that are low-drag *relative to their own Mach bucket*, not a global cutoff) — the most theoretically correct version of reweighting, similar result again.
+4. Giving `CdMin` a dedicated, deeper branch in the network (still sharing the early trunk with `LDMax`/`ClMax`) — no effect at all on its own; only helped when combined with reweighting, and even then didn't beat reweighting alone.
+5. A fully independent model for `CdMin` — separate architecture, zero shared layers, plus new engineered features (Mach one-hot buckets, since Mach is really only ~4 discrete values in this dataset, plus Re-Mach interaction terms) — landed in essentially the same place as the simplest reweighting fix from step 1.
+
+Five meaningfully different approaches, all converging to roughly the same recovery (about +1.0 to +1.4 R² points on that slice, nowhere close to positive). That consistency is itself the finding: this doesn't look like a model-capacity or feature-engineering problem anymore. My best guess is it's closer to a genuine data ceiling — XFOIL's own reliability plausibly degrades in this low-Reynolds, near-transonic, genuinely-low-drag corner, and the cached dataset has no convergence/quality signal I could use to confirm that without re-running simulations myself.
+
+**Where this leaves the shipped model:** none of the experiments cleanly beat the baseline by enough to justify the added complexity, so the deployed model is still the original `cd_loss_only` ensemble. If you're using the reverse-design tool, be extra skeptical of results targeting low drag at Mach≥0.49 — and note that the ensemble's own uncertainty flag won't catch this for you, since all three seeds are consistently wrong in the same way there (it's a systematic bias, not random disagreement across seeds).
 
 ## Setup and Installation
 
@@ -84,7 +101,7 @@ TensorFlow/Keras for the forward ensemble, scikit-learn for PCA and scaling, and
 
 ## Where this is headed
 
-The reverse search currently works best when your target performance is reasonably close to something in the training distribution — it gets less reliable the further out you push it, particularly for very low-drag requests, which is the next thing on my list to tighten up. Longer term I'd like to add a proper geometry validity check that re-runs candidates through XFOIL directly rather than trusting the surrogate alone.
+The reverse search currently works best when your target performance is reasonably close to something in the training distribution — it gets less reliable the further out you push it, and the low-drag/Mach≥0.49 corner above is the clearest example of that. I'd like to revisit the low-drag `CdMin` gap with an actual look at XFOIL run quality in that regime rather than more model-side experiments, since that's the one lever I haven't pulled yet. Longer term I'd also like to add a proper geometry validity check that re-runs candidates through XFOIL directly rather than trusting the surrogate alone.
 
 ---
 
