@@ -1,0 +1,9 @@
+.git
+node_modules
+backend/node_modules
+__pycache__
+*.pyc
+Reference_Notebooks
+Reverse_outputs
+.DS_Store
+*.log

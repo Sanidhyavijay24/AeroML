@@ -85,6 +85,12 @@ AeroML/
   - [x] Convert frontend sliders to 4-position discrete selectors snapping to valid training Mach values.
   - [x] Render amber "OUTSIDE VALIDATED RANGE" status badges when predictions bypass client constraints.
   - [x] Sync illustrative landing page visualizer metrics to valid grid values.
+- [x] **Phase 6: Cloud Deployment & Dockerization**
+  - [x] Configure server.ts to accept port configuration from environment variables (PORT).
+  - [x] Enable dynamic Python process path injection via PYTHON_BIN environment variables.
+  - [x] Fix fallback executable search on Linux to seek python3.
+  - [x] Create optimized layered-caching Dockerfile to build python slim images.
+  - [x] Set up standard .dockerignore configuration to prevent pushing modules and log traces.
 
 ## Data Models
 - **Caching Dataset:** NPZ file (`aeroml_xfoil_n9_dataset.npz`) containing:
