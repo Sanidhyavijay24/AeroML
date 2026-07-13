@@ -51,7 +51,7 @@ def load_models():
         print("[Inference Server] Loading ForwardV3Predictor...", flush=True)
         predictor = ForwardV3Predictor()
         print("[Inference Server] Loading ReverseV3Designer...", flush=True)
-        designer = ReverseV3Designer()
+        designer = ReverseV3Designer(forward=predictor)
         is_ready = True
         print("[Inference Server] Models loaded. Server ready.", flush=True)
     except Exception as e:

@@ -15,6 +15,8 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
 from tensorflow import keras
 
 import aeroml.data as data
@@ -78,6 +80,11 @@ class ForwardV3Predictor:
             tf.function(lambda inputs, m=model: m(inputs, training=False), reduce_retracing=True)
             for model in self.models
         ]
+
+        # Garbage collect massive data loaders immediately to prevent OOM
+        del X_profile, X_scalar, X_flow, y_targets, meta
+        import gc
+        gc.collect()
 
     def _predict_batch(
         self,

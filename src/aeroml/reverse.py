@@ -23,9 +23,9 @@ _trapz = features._trapz
 
 
 class ReverseV3Designer:
-    def __init__(self, search_roots: list[Path] | None = None):
+    def __init__(self, search_roots: list[Path] | None = None, forward: ForwardV3Predictor | None = None):
         self.search_roots = search_roots or [data.WORK_DIR, Path.cwd(), Path("/kaggle/input")]
-        self.forward = ForwardV3Predictor(search_roots=self.search_roots)
+        self.forward = forward or ForwardV3Predictor(search_roots=self.search_roots)
         self._load_geometry_space()
 
         self.local_re_log_tol = 0.18
@@ -79,6 +79,11 @@ class ReverseV3Designer:
         self.ld_scale = float(np.std(self.y_train_raw[:, 0]))
         self.cl_scale = float(np.std(self.y_train_raw[:, 1]))
         self.cd_log_scale = float(np.std(np.log(self.y_train_raw[:, 2])))
+
+        # Free memory at the end of geometry space load
+        del X_profile, X_scalar, X_flow, y_targets, meta
+        import gc
+        gc.collect()
 
     def shape_from_latent(self, z: np.ndarray) -> dict[str, Any]:
         clipped = np.clip(np.asarray(z, dtype=np.float64), self.latent_low, self.latent_high)
