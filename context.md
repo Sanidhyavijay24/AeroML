@@ -91,6 +91,12 @@ AeroML/
   - [x] Fix fallback executable search on Linux to seek python3.
   - [x] Create optimized layered-caching Dockerfile to build python slim images.
   - [x] Set up standard .dockerignore configuration to prevent pushing modules and log traces.
+- [x] **Phase 7: Persistent Inference Server (OOM Crash Resolution)**
+  - [x] Create persistent lightweight Python HTTP model server in `scripts/inference_server.py`.
+  - [x] Load neural network predictor and latent optimization designer objects once at startup.
+  - [x] Handle startup race condition by reporting starting/503 service status in `/health`.
+  - [x] Rewrite `server.ts` to request predictions/optimization via internal HTTP rather than spawning child processes.
+  - [x] Implement robust watchdog client to automatically restart crashed Python processes with backoff.
 
 ## Data Models
 - **Caching Dataset:** NPZ file (`aeroml_xfoil_n9_dataset.npz`) containing:

@@ -5,6 +5,14 @@
 @module scripts
 """
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['absl_minloglevel'] = '3'
+import logging
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+import warnings
+warnings.filterwarnings('ignore')
+
 import sys
 import argparse
 import json

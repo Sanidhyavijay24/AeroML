@@ -33,6 +33,100 @@ function getPythonExecutable(): string {
 
 const PYTHON_BIN = getPythonExecutable();
 
+/* ==========================================================================
+   Persistent Python Inference Server Management & Watchdog
+   ========================================================================== */
+const INFERENCE_PORT = Number(process.env.INFERENCE_PORT) || 8500;
+let pythonProcess: any = null;
+let restartAttempts = 0;
+const MAX_RESTART_ATTEMPTS = 5;
+const RESTART_COOLDOWN_MS = 5000;
+
+function startInferenceServer() {
+  console.log(`[Hono Gateway] Launching persistent Python inference server on port ${INFERENCE_PORT}...`);
+  const cmd = [
+    PYTHON_BIN,
+    "./scripts/inference_server.py"
+  ];
+  
+  pythonProcess = Bun.spawn(cmd, {
+    cwd: PROJECT_ROOT,
+    env: {
+      ...process.env,
+      INFERENCE_PORT: String(INFERENCE_PORT),
+      TF_CPP_MIN_LOG_LEVEL: "3",
+      absl_minloglevel: "3",
+      TF_ENABLE_ONEDNN_OPTS: "0"
+    },
+    stdout: "inherit",
+    stderr: "inherit"
+  });
+
+  pythonProcess.exited.then((code: number) => {
+    console.error(`[Hono Gateway] Watchdog: Python process exited with code ${code}.`);
+    pythonProcess = null;
+    
+    if (restartAttempts < MAX_RESTART_ATTEMPTS) {
+      restartAttempts++;
+      const nextDelay = RESTART_COOLDOWN_MS * Math.pow(1.5, restartAttempts - 1);
+      console.log(`[Hono Gateway] Watchdog: Scheduling restart attempt ${restartAttempts}/${MAX_RESTART_ATTEMPTS} in ${(nextDelay / 1000).toFixed(1)}s...`);
+      setTimeout(() => {
+        if (!pythonProcess) {
+          startInferenceServer();
+        }
+      }, nextDelay);
+    } else {
+      console.error("[Hono Gateway] Watchdog: Max python subprocess restart attempts exceeded. Server will remain offline.");
+    }
+  });
+}
+
+// Reset restart counters on a successful connection to prevent permanent failure
+async function verifyServerHeartbeat() {
+  try {
+    const res = await fetch(`http://127.0.0.1:${INFERENCE_PORT}/health`, {
+      signal: AbortSignal.timeout(800)
+    });
+    if (res.status === 200 || res.status === 503) {
+      if (restartAttempts > 0) {
+        console.log("[Hono Gateway] Heartbeat: Server alive, resetting watchdog counter.");
+        restartAttempts = 0;
+      }
+    }
+  } catch (e) {
+    // Ignore error
+  }
+}
+setInterval(verifyServerHeartbeat, 10000);
+
+async function checkHealth(): Promise<{ status: "ready" | "starting" | "error" | "offline"; message?: string }> {
+  try {
+    const res = await fetch(`http://127.0.0.1:${INFERENCE_PORT}/health`, {
+      signal: AbortSignal.timeout(1000)
+    });
+    if (res.status === 200) {
+      return { status: "ready" };
+    }
+    if (res.status === 503) {
+      return { status: "starting" };
+    }
+    const data: any = await res.json().catch(() => ({ message: "Unknown inference server status." }));
+    return { status: "error", message: data.message || "Failed to load models." };
+  } catch (err) {
+    return { status: "offline" };
+  }
+}
+
+// Initialize persistent inference backend process
+startInferenceServer();
+
+process.on("exit", () => {
+  if (pythonProcess) {
+    console.log("[Hono Gateway] Terminating persistent Python server...");
+    pythonProcess.kill();
+  }
+});
+
 const app = new Hono();
 
 /* ==========================================================================
@@ -130,6 +224,19 @@ const optimizeSchema = z.object({
  * Uploads an airfoil coordinates file and queries predictions from forward model.
  */
 app.post("/api/predict", async (c) => {
+  const health = await checkHealth();
+  if (health.status !== "ready") {
+    c.status(503);
+    return c.json({
+      error: "service_unavailable",
+      message: health.status === "starting"
+        ? "Surrogate model server is still starting up, please try again shortly."
+        : health.status === "error"
+        ? `Model server failed to load: ${health.message}`
+        : "Model server is currently offline. Attempting watchdog auto-restart."
+    });
+  }
+
   const body = await c.req.parseBody();
   const file = body["file"] as File;
   const reStr = body["re"];
@@ -157,39 +264,26 @@ app.post("/api/predict", async (c) => {
   await Bun.write(tempPath, fileBytes);
 
   try {
-    // Spawn python subprocess bridging to our neural network predictor with root CWD
-    const proc = Bun.spawn([
-      PYTHON_BIN,
-      "./scripts/api_bridge.py",
-      "predict",
-      "--file", tempPath,
-      "--re", String(re),
-      "--mach", String(mach),
-    ], {
-      cwd: PROJECT_ROOT
+    const res = await fetch(`http://127.0.0.1:${INFERENCE_PORT}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        file_path: tempPath,
+        re,
+        mach
+      })
     });
 
-    const stdout = await new Response(proc.stdout).text();
-    const stderr = await new Response(proc.stderr).text();
-    const exitCode = await proc.exited;
-
-    if (exitCode !== 0) {
-      console.error("Predict Subprocess stderr:", stderr);
-      return c.json(
-        { error: "prediction_failed", message: "Prediction calculation error.", details: stderr },
-        500
-      );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Unknown inference server error." }));
+      throw new Error(err.message || "CFD surrogate solver engine runtime error.");
     }
 
-    const payload = JSON.parse(stdout);
-    if (payload.error) {
-      return c.json({ error: "prediction_failed", message: payload.error }, 400);
-    }
-
+    const payload = await res.json();
     return c.json(payload);
   } catch (err: any) {
     console.error(err);
-    return c.json({ error: "server_error", message: err.message }, 500);
+    return c.json({ error: "prediction_failed", message: err.message }, 500);
   } finally {
     // Cleanup temporary file
     const f = Bun.file(tempPath);
@@ -204,6 +298,19 @@ app.post("/api/predict", async (c) => {
  * Accepts design goals and runs latent-space optimizer algorithm.
  */
 app.post("/api/optimize", async (c) => {
+  const health = await checkHealth();
+  if (health.status !== "ready") {
+    c.status(503);
+    return c.json({
+      error: "service_unavailable",
+      message: health.status === "starting"
+        ? "Surrogate model server is still starting up, please try again shortly."
+        : health.status === "error"
+        ? `Model server failed to load: ${health.message}`
+        : "Model server is currently offline. Attempting watchdog auto-restart."
+    });
+  }
+
   let rawBody: any;
   try {
     rawBody = await c.req.json();
@@ -220,39 +327,30 @@ app.post("/api/optimize", async (c) => {
   const { ldmax, clmax, cdmin, re, mach, n_restarts = 8, opt_maxiter = 35 } = validation.data;
 
   try {
-    // Spawn python subprocess bridging to our reverse optimizer with root CWD
-    const proc = Bun.spawn([
-      PYTHON_BIN,
-      "./scripts/api_bridge.py",
-      "optimize",
-      "--ldmax", String(ldmax),
-      "--clmax", String(clmax),
-      "--cdmin", String(cdmin),
-      "--re", String(re),
-      "--mach", String(mach),
-      "--restarts", String(n_restarts),
-      "--maxiter", String(opt_maxiter),
-    ], {
-      cwd: PROJECT_ROOT
+    const res = await fetch(`http://127.0.0.1:${INFERENCE_PORT}/optimize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ldmax,
+        clmax,
+        cdmin,
+        re,
+        mach,
+        restarts: n_restarts,
+        maxiter: opt_maxiter
+      })
     });
 
-    const stdout = await new Response(proc.stdout).text();
-    const stderr = await new Response(proc.stderr).text();
-    const exitCode = await proc.exited;
-
-    if (exitCode !== 0) {
-      console.error("Optimize Subprocess stderr:", stderr);
-      return c.json(
-        { error: "optimization_failed", message: "Optimization calculation error.", details: stderr },
-        500
-      );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: "Unknown inference server error." }));
+      throw new Error(err.message || "Optimization solver runtime execution error.");
     }
 
-    const payload = JSON.parse(stdout);
+    const payload = await res.json();
     return c.json(payload);
   } catch (err: any) {
     console.error(err);
-    return c.json({ error: "server_error", message: err.message }, 500);
+    return c.json({ error: "optimization_failed", message: err.message }, 500);
   }
 });
 
