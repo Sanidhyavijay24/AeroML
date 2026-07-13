@@ -14,6 +14,9 @@ import { join } from "path";
 const PROJECT_ROOT = join(import.meta.dir, "..");
 
 function getPythonExecutable(): string {
+  if (process.env.PYTHON_BIN) {
+    return process.env.PYTHON_BIN;
+  }
   const condaPaths = [
     "C:\\Users\\sanid\\.conda\\envs\\aeroml\\python.exe",
     "C:\\ProgramData\\miniconda3\\envs\\aeroml\\python.exe",
@@ -25,7 +28,7 @@ function getPythonExecutable(): string {
       return path;
     }
   }
-  return "python";
+  return "python3";
 }
 
 const PYTHON_BIN = getPythonExecutable();
@@ -262,6 +265,6 @@ app.get("/*", serveStatic({ root: "../frontend" }));
 
 // Launch Hono server
 export default {
-  port: 8080,
+  port: Number(process.env.PORT) || 8080,
   fetch: app.fetch,
 };
