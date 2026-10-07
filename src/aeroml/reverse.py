@@ -22,6 +22,16 @@ from aeroml.forward import ForwardV3Predictor, find_artifact
 _trapz = features._trapz
 
 
+class PrecomputedPCA:
+    """Lightweight PCA inverse transform wrapper using pre-computed components and mean."""
+    def __init__(self, components: np.ndarray, mean: np.ndarray):
+        self.components_ = np.asarray(components, dtype=np.float32)
+        self.mean_ = np.asarray(mean, dtype=np.float32)
+
+    def inverse_transform(self, X: np.ndarray) -> np.ndarray:
+        return np.dot(X, self.components_) + self.mean_
+
+
 class ReverseV3Designer:
     def __init__(self, search_roots: list[Path] | None = None, forward: ForwardV3Predictor | None = None):
         self.search_roots = search_roots or [data.WORK_DIR, Path.cwd(), Path("/kaggle/input")]
@@ -42,6 +52,46 @@ class ReverseV3Designer:
         self.max_clmax_std_norm = 0.18
 
     def _load_geometry_space(self) -> None:
+        # Check for pre-computed geometry space artifacts
+        geom_path = None
+        limits_path = None
+        try:
+            geom_path = find_artifact("aeroml_reverse_geometry_space.npz", self.search_roots)
+            limits_path = find_artifact("aeroml_reverse_geom_limits.json", self.search_roots)
+        except FileNotFoundError:
+            pass
+
+        if geom_path is not None and limits_path is not None:
+            geom_data = np.load(geom_path)
+            self.n_stations = features.N_STATIONS
+            self.x_grid = features.cosine_spacing(self.n_stations)
+            self.rng = np.random.default_rng(data.RANDOM_STATE)
+
+            self.pca = PrecomputedPCA(geom_data["pca_components"], geom_data["pca_mean"])
+            self.z_train = geom_data["z_train"]
+            self.latent_low = geom_data["latent_low"]
+            self.latent_high = geom_data["latent_high"]
+            self.latent_span = geom_data["latent_span"]
+            self.latent_bounds = list(zip(self.latent_low, self.latent_high))
+
+            with open(limits_path, "r", encoding="utf-8") as f:
+                self.geom_limits = json.load(f)
+
+            scales = geom_data["scales"]
+            self.ld_scale = float(scales[0])
+            self.cl_scale = float(scales[1])
+            self.cd_log_scale = float(scales[2])
+
+            self.train_meta = pd.DataFrame({
+                "Re": geom_data["train_re"],
+                "Mach": geom_data["train_mach"],
+                "LDMax": geom_data["train_ldmax"],
+                "ClMax": geom_data["train_clmax"],
+                "CdMin": geom_data["train_cdmin"],
+            })
+            self.meta = self.train_meta
+            return
+
         X_profile, X_scalar, X_flow, y_targets, meta = data.build_or_load_cached_dataset()
         split_manifest = pd.read_csv(find_artifact("aeroml_xfoil_split_manifest.csv", self.search_roots))
         train_idx, _, _ = data.materialize_indices(meta, split_manifest)

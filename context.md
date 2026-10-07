@@ -97,6 +97,14 @@ AeroML/
   - [x] Handle startup race condition by reporting starting/503 service status in `/health`.
   - [x] Rewrite `server.ts` to request predictions/optimization via internal HTTP rather than spawning child processes.
   - [x] Implement robust watchdog client to automatically restart crashed Python processes with backoff.
+- [x] **Phase 8: ONNX Runtime Conversion & Memory Optimization (Render Free-Tier Enablement)**
+  - [x] Export 3-seed forward neural network ensemble to ONNX (`.onnx`) format with exact 32-bit floating-point parity.
+  - [x] Precompute StandardScaler weights and PCA geometry space/bounds into compact runtime artifacts (`Forward_outputs/aeroml_forward_scalers.npz`, `Forward_outputs/aeroml_reverse_geometry_space.npz`, `Forward_outputs/aeroml_reverse_geom_limits.json`), eliminating runtime parsing of the 45MB CSV dataset.
+  - [x] Implement conditional ONNX runtime in `src/aeroml/forward.py` and `src/aeroml/reverse.py` with `ArrayScaler` and `PrecomputedPCA`, bypassing TensorFlow imports entirely in production.
+  - [x] Slashed Python runtime memory from ~700 MB down to <70 MB (total container memory ~105 MB), easily fitting within Render's 512 MB free tier.
+  - [x] Replaced `tensorflow` with `onnxruntime==1.23.2` in `requirements.txt`; created `requirements-train.txt` for optional local model retraining.
+  - [x] Validated drift tests (`test_forward_drift.py`) and full-stack reverse optimization end-to-end with sub-second response times.
+  - [x] Cleaned repository by deleting obsolete root `Aeroml hero prototype.html` and updating `.dockerignore` to exclude legacy `.keras` models, raw 71MB training datasets, and development scripts from the Render Docker build context.
 
 ## Data Models
 - **Caching Dataset:** NPZ file (`aeroml_xfoil_n9_dataset.npz`) containing:

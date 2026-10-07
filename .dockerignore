@@ -7,3 +7,12 @@ Reference_Notebooks
 Reverse_outputs
 .DS_Store
 *.log
+*.tmp
+
+# Exclude legacy training datasets & unneeded files from Docker build context
+Data_Cache/aeroml_xfoil_n9_meta.csv
+Data_Cache/aeroml_xfoil_n9_dataset.npz
+Forward_outputs/*.keras
+tests
+requirements-train.txt
+scripts/export_runtime_artifacts.py
